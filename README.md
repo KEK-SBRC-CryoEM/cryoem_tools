@@ -1,2 +1,2 @@
-# cryoem_tools
-Python utilities for cryo-EM SPA workflows
+# CryoEM Tools
+Python utilities for Cryogenic Electron Microscopy Single Particle Analysis.
