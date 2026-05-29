@@ -106,69 +106,26 @@ def prepare_output_directory(output_dir):
     return final_dir
 
 ### handling output ###
-def convert_dict2json(data):
+def dict2json(data):
     return json.dumps(data, cls=NumpyEncoder, indent=2)
 
-def convert_dict2yaml(data):
+def dict2yaml(data):
     setup_yaml()
     return yaml.safe_dump(data, sort_keys=False)
 
-def save_file(content, output_directory, filename):
-    if output_directory:
-        filepath = os.path.join(output_directory, filename)
+def save_file(data, filepath):
+    if filepath:
         with open(filepath, "w") as file:
-            file.write(output)
-
-
-def handle_output(result, to_json=False, output_directory=None):
-    """
-    Convert a dictionary to YAML (default) or JSON and optionally save to a file.
-
-    Parameters
-    ----------
-    result : dict
-        The result data to output.
-    to_json : bool, optional
-        If True, output as JSON. Otherwise, use YAML for a more human-friendly format.
-    output_directory : str, optional
-        File path where the output will also be saved.
-
-    Return
-    ----------
-    The converted dictionary to YAML or JSON
-
-    Example
-    -------
-    >>> result = {"accuracy": 0.92}
-    >>> handle_output(result, to_json=True)
-    >>> handle_output(result, to_json=False, output_directory="result")
-    """
-
-    # file conversion
-    if to_json:
-        output = json.dumps(result, cls=NumpyEncoder, indent=2)
-        ext = "json"
-    else:
-        setup_yaml()
-        output = yaml.safe_dump(result, sort_keys=False)
-        ext = "yaml"
-
-    # save to file
-    if output_directory:
-        filepath = os.path.join(output_directory, f"output.{ext}")
-        with open(filepath, "w") as file:
-            file.write(output)
-
-    return output
+            file.write(data)
 
 class NumpyEncoder(json.JSONEncoder):
     def default(self, obj):
         if isinstance(obj, np.integer):
-            return int(obj)      # np.int64   to int
+            return int(obj)      # np.int64 to int
         if isinstance(obj, np.floating):
             return float(obj)    # np.float64 to float
         if isinstance(obj, np.ndarray):
-            return obj.tolist()  # array      to list
+            return obj.tolist()  # array to list
         return super().default(obj)
 
 def setup_yaml():
