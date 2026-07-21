@@ -1,0 +1,28 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name        = "cryoem_tools"
+version     = "2026.07.21a1"
+description = "KEK/SBRC CryoEM SPA Tools"
+
+
+dependencies    = ["numpy",
+                   "scipy",
+                   "opencv-python",
+                   "matplotlib",
+                   "pyyaml",
+                   "mrcfile",
+                   "miniball @ git+https://github.com/hbf/miniball.git#subdirectory=python"
+]
+
+readme  = "README.md"
+license = "GPL-3.0-or-later"
+license-files = ["LICENSE"]
+
+[project.urls]
+github = "https://github.com/KEK-SBRC-CryoEM/cryoem_tools"
+
+[tool.setuptools.packages.find]
+where = ["src"]
