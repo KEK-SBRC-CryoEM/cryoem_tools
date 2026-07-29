@@ -6,7 +6,7 @@ import numpy as np
 from scipy import ndimage
 
 from spa import utils
-import spa.volume
+from spa import volume as volops
 
 logger = logging.getLogger("SIZE ESTIMATION")
 
@@ -19,11 +19,11 @@ def estimate_particle_size(volume, threshold, kernel_size=3, kernel_spherical=Tr
 
     # binary segmentation
     logger.info(f"Applying binary segmentation...")
-    volume_processed = spa.volume.binary_segmentation(volume_processed, threshold, is_binary_mask=False)
+    volume_processed = volops.binary_segmentation(volume_processed, threshold, is_binary_mask=False)
 
     # topological operations
     if kernel_spherical:
-        kernel = spa.volume.get_spherical_kernel(kernel_size)
+        kernel = volops.get_spherical_kernel(kernel_size)
     else:
         kernel = np.ones((kernel_size, kernel_size, kernel_size)).astype(bool)
     logger.info(f"Applying topological opening...")
@@ -32,7 +32,7 @@ def estimate_particle_size(volume, threshold, kernel_size=3, kernel_spherical=Tr
     volume_processed = ndimage.binary_closing(volume_processed, structure=kernel)
 
     logger.info(f"Finding the enclosed sphere...")
-    sphere = spa.volume.compute_enclosing_sphere(volume_processed)
+    sphere = volops.compute_enclosing_sphere(volume_processed)
     return sphere
 
 if __name__ == "__main__":
@@ -65,7 +65,7 @@ if __name__ == "__main__":
 
     # computation
     logger.info(f"Loading file: {args.volume}")
-    volume   = spa.volume.mrc.load(args.volume)
+    volume   = utils.mrc.load(args.volume)
 
     logger.info(f"Running size estimation...")
     result = estimate_particle_size(volume["data"], threshold=args.threshold)
@@ -78,7 +78,7 @@ if __name__ == "__main__":
         fname = f"mask_r{int(result['radius'])}.mrc"
         fpath = os.path.join(basedir or ".", fname)
         logger.info(f"Saving mask to {fpath}")
-        mask = spa.volume.create_spherical_mask(
+        mask = volops.create_spherical_mask(
                 shape  = volume["data"].shape,
                 radius = result["radius"],
                 center = result["center"]
