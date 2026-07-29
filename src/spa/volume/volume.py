@@ -79,7 +79,7 @@ def compute_enclosing_sphere(binary_mask):
     return result
 
 ## mask ##
-def create_spherical_mask(shape, radius, voxel_size, center=None):
+def create_spherical_mask(shape, radius, center=None):
     """
     Create a 3D spherical mask with binary values (1 inside sphere, 0 outside).
     

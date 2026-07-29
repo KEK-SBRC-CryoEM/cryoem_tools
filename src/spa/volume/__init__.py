@@ -1,3 +1,3 @@
 from .volume import *
-from . import mrc
+from ..utils import mrc
 from . import visualization

@@ -5,7 +5,7 @@ import argparse
 import numpy as np
 from scipy import ndimage
 
-import spa.utils
+from spa import utils
 import spa.volume
 
 logger = logging.getLogger("SIZE ESTIMATION")
@@ -36,29 +36,29 @@ def estimate_particle_size(volume, threshold, kernel_size=3, kernel_spherical=Tr
     return sphere
 
 if __name__ == "__main__":
-    # python mask_size.py -v data_testing/prot_mask_final.mrc -s
-    # python mask_size.py -v data_testing/postprocess.mrc -t 0.008 -s
+    # python src/spa/analyses/size_estimation.py -v test_/input/volume/emd_0407_mask_aligned.mrc   -s --output-dir test_/output/
+    # python src/spa/analyses/size_estimation.py -v test_/input/volume/emd_0407_volume_aligned.map -t 0.008 -s --output-dir test_/output/
     parser = argparse.ArgumentParser(
         description=(
             "Estimates the size of the positive density of a .mrc file, "
             "by finding the enclosing sphere of the binary segmented volume. \n"
-            "Use --save_mask to create a binary spherical mask (.mrc) for visual validation.\n"
+            "Use --save to create a binary spherical mask (.mrc) for visual validation.\n"
             "Usage: \n"
-            "\t python mask_size.py -v data_testing/prot_mask_final.mrc -s\n"
-            "\t python mask_size.py -v data_testing/postprocess.mrc -t 0.0143 -s"
+            "\t python size_estimation.py -v test_/prot_mask_final.mrc -s\n"
+            "\t python size_estimation.py -v test_/postprocess.mrc -t 0.0143 -s"
         ),
         formatter_class=argparse.RawTextHelpFormatter)
-    parser.add_argument("-v", "--volume", type=str, required=True, help="MRC file path (.mrc)")
-    parser.add_argument("-t", "--threshold", type=float, default=0, help="Threshold value that best filters out noise (default: 0)")
-    parser.add_argument("-s", "--save_mask", action="store_true", help="Save enclosing sphere as a map file (.mrc)")
-    parser = spa.utils.add_common_cli_arguments(parser) # adds --verbose, --json, --output-dir --debug
+    parser.add_argument("-v", "--volume",    type=str, required=True, help="Volume or Mask filepath (.mrc)")
+    parser.add_argument("-t", "--threshold", type=float, default=0,   help="Threshold value that best filters out noise (default: 0)")
+    parser.add_argument("-s", "--save",      action="store_true",     help="Save enclosing sphere as a mask file (.mrc)")
+    parser = utils.cli.add_common_arguments(parser) # adds --verbose, --json, --output-dir --debug
     args = parser.parse_args()
 
     # directory creation
-    basedir = spa.utils.mkdir_timestamp(args.output_dir) # skip if args.output_dir is None
+    basedir = utils.paths.mkdir_timestamp(args.output_dir) # skip if args.output_dir is None
 
     # logging
-    spa.utils.configure_logging(verbose=args.verbose, output_directory=basedir, capture_warnings=True)
+    utils.log.configure_logging(verbose=args.verbose, output_directory=basedir, capture_warnings=True)
 
     if basedir:
         logger.info(f"Output directory set to: {basedir}")
@@ -69,26 +69,26 @@ if __name__ == "__main__":
 
     logger.info(f"Running size estimation...")
     result = estimate_particle_size(volume["data"], threshold=args.threshold)
-    result["voxel_size"] = volume["voxel_size"][0]
-    result["box_size"]   = volume["box_size"][0]
+    
+    result["shape"] = volume["shape"][0]
+    result["voxel_size_A_per_px"] = volume["voxel_size_A_per_px"][0]
     
     # save mask
-    if args.save_mask:
+    if args.save:
         fname = f"mask_r{int(result['radius'])}.mrc"
         fpath = os.path.join(basedir or ".", fname)
         logger.info(f"Saving mask to {fpath}")
-        spa.volume.create_spherical_mask(
-                shape      = volume["data"].shape, 
-                voxel_size = result["voxel_size"],
-                radius     = result["radius"],
-                center     = result["center"],
-                filename   = fpath
+        mask = spa.volume.create_spherical_mask(
+                shape  = volume["data"].shape,
+                radius = result["radius"],
+                center = result["center"]
         )
+        utils.mrc.save(volume=mask.astype(np.uint8), voxel_size=volume["voxel_size_A_per_px"], filename=fpath)
         result["mask_filepath"] = fpath
 
     # print and save output
-    output = spa.utils.print_and_save_output_file(result, 
-                                              print_as="json" if args.json else "yaml",
-                                              filepath=os.path.join(basedir, "size_estimation") if basedir else None)
+    output = utils.output.print_and_save(result, 
+                                         print_as="json" if args.json else "yaml",
+                                         filepath=os.path.join(basedir, "size_estimation") if basedir else None)
 
 

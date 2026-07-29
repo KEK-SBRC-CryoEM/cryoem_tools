@@ -1,6 +1,6 @@
 import argparse
 
-def add_common_cli_arguments(parser):
+def add_common_arguments(parser):
     """
     Add shared command-line arguments related to input/output behavior.
 
