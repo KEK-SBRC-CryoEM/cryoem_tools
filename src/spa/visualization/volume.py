@@ -5,8 +5,14 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
 ## opencv related ##
-def normalize_to_uint8(img, max_value):
-    return (255*img/max_value).astype(np.uint8)
+def normalize_to_uint8(img, max_value, min_value=0):
+    if max_value == min_value:
+        return np.zeros_like(img, dtype=np.uint8)
+
+    img = (img - min_value) / (max_value - min_value)
+    return (img * 255).astype(np.uint8)
+
+
 
 def binary_to_grayscale(img):
     img_gray = img.astype(np.uint8) * 255

@@ -9,7 +9,7 @@ from scipy import ndimage
 from spa import utils
 from spa import volume as volops
 
-__myname__ = Path(__file__).name
+__myname__ = Path(__file__).stem
 logger = logging.getLogger(__myname__)
 
 def estimate_particle_size(volume, threshold, kernel_size=3, kernel_spherical=True):
@@ -51,7 +51,7 @@ if __name__ == "__main__":
         ),
         formatter_class=argparse.RawTextHelpFormatter)
     parser.add_argument("-v", "--volume",    type=str, required=True, help="Volume or Mask filepath (.mrc)")
-    parser.add_argument("-t", "--threshold", type=float, default=0,   help="Threshold value that best filters out noise (default: 0)")
+    parser.add_argument("-t", "--threshold", type=float, default=0,   help="Threshold value that best filters out noise (default: 0). Not required if --volume is a mask.")
     parser.add_argument("-s", "--save",      action="store_true",     help="Save enclosing sphere as a mask file (.mrc)")
     parser = utils.cli.add_common_arguments(parser) # adds --verbose, --json, --output-dir --debug
     args = parser.parse_args()
@@ -90,10 +90,10 @@ if __name__ == "__main__":
         result["mask_filepath"] = fpath
 
     # print and save output
-    logger.info(f"Result: {result}")
     output = utils.output.print_and_save(result, 
                                          print_as="json" if args.json else "yaml",
                                          filepath=os.path.join(basedir, "size_estimation") if basedir else None)
+    logger.info(f"Result:\n{output['yaml']}")
     logger.info(f"Exiting...")
     logger.info("-"*40)
     
