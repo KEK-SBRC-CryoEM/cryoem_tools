@@ -1,6 +1,7 @@
 import os
 import logging
 import argparse
+from pathlib import Path
 
 import numpy as np
 from scipy import ndimage
@@ -8,7 +9,8 @@ from scipy import ndimage
 from spa import utils
 from spa import volume as volops
 
-logger = logging.getLogger("SIZE ESTIMATION")
+__myname__ = Path(__file__).name
+logger = logging.getLogger(__myname__)
 
 def estimate_particle_size(volume, threshold, kernel_size=3, kernel_spherical=True):
     volume_processed = volume
@@ -40,7 +42,7 @@ if __name__ == "__main__":
     # python src/spa/analyses/size_estimation.py -v test_/input/volume/emd_0407_volume_aligned.map -t 0.008 -s --output-dir test_/output/
     parser = argparse.ArgumentParser(
         description=(
-            "Estimates the size of the positive density of a .mrc file, "
+            "Estimate the size of the positive density of a .mrc file, "
             "by finding the enclosing sphere of the binary segmented volume. \n"
             "Use --save to create a binary spherical mask (.mrc) for visual validation.\n"
             "Usage: \n"
@@ -60,8 +62,9 @@ if __name__ == "__main__":
     # logging
     utils.log.configure_logging(verbose=args.verbose, output_directory=basedir, capture_warnings=True)
 
-    if basedir:
-        logger.info(f"Output directory set to: {basedir}")
+    # print log header
+    if args.verbose:
+        utils.cli.log_cli_header(logger=logger, script_name=__myname__, args=args)
 
     # computation
     logger.info(f"Loading file: {args.volume}")
@@ -87,8 +90,12 @@ if __name__ == "__main__":
         result["mask_filepath"] = fpath
 
     # print and save output
+    logger.info(f"Result: {result}")
     output = utils.output.print_and_save(result, 
                                          print_as="json" if args.json else "yaml",
                                          filepath=os.path.join(basedir, "size_estimation") if basedir else None)
+    logger.info(f"Exiting...")
+    logger.info("-"*40)
+    
 
 
