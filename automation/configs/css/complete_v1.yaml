@@ -13,7 +13,7 @@ css:
       - name: compute_size_in_real_space
         args:
           - particle_diameter : {from: workflow.calc_size_negative_density_region.output.sphere_negative.diameter}
-          - pixel_size        : {from: workflow.calc_size_negative_density_region.output.sphere_negative.voxel_size}
+          - pixel_size        : {from: workflow.calc_size_negative_density_region.output.sphere_negative.voxel_size_A_per_px}
   ## lbin ##
   SS_comm_lbin_angpix     : {from: workflow.calc_params-lbin.output.binned_pixel_size}
   SS_comm_lbin_ref3d_path : "$BASEDIR/create_volume-lbin/lbin.mrc"
