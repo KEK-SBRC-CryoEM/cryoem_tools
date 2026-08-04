@@ -34,7 +34,7 @@ def compute_binned_box_size(boxsize, binning_factor):
     return boxsize / binning_factor
 
 ### boxsize related
-def compute_extract_mics_box(box_size_1, pixel_size_1, binning_factor_1, 
+def choose_ctfbox_or_negbox(box_size_1, pixel_size_1, binning_factor_1, 
                              box_size_2, pixel_size_2, binning_factor_2):
     # convert to angstrom
     diameter_1 = box_size_1 * pixel_size_1

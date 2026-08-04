@@ -317,7 +317,7 @@ def css_run(css_settings, workflow_data, basedir, debug=False):
         # final output
         _ = utils.output.print_and_save(css_result, 
                                         print_as=None,
-                                        filepath=os.path.join(basedir, "css_parameters.yaml") if basedir else None)
+                                        filepath=os.path.join(basedir, "css_parameters") if basedir else None)
 
     return css_result
 
