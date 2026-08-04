@@ -18,7 +18,7 @@ matplotlib.use('Agg') # prevents opening the gui
 
 from spa import utils
 from spa.physics.ctf import ctf_limit, phaseshift_ctf, phaseshift_ctf2d, ctf_delocalization_distance_A
-from spa.physics import                       relativistic_electron_wavelength_A    
+from spa.physics import relativistic_electron_wavelength_A    
 
 from pathlib import Path
 __myname__ = Path(__file__).stem
