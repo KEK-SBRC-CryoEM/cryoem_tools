@@ -268,10 +268,9 @@ def run(workflow_data, toolbox_settings, basedir, debug=False):
                 pickle.dump(workflow_data, file)
 
         # save state data (future: this will be used to stop/continue the workflow)
-        utils.handle_output(workflow_data, 
-                            to_json=True, 
-                            filename=os.path.join(basedir, "pipeline_data.json"),
-                            show=False)
+        _ = utils.output.print_and_save(workflow_data, 
+                                        print_as=None,
+                                        filepath=os.path.join(basedir, "pipeline_data") if basedir else None)
 
     return workflow_data
 
