@@ -448,10 +448,11 @@ def run_ctf_vs_boxsize(voltage, cs, pixelsize_list, defocus_list, boxsize_list, 
 
 def run_boxsize_fresnel(particle_diameter, voltage_kV, resolution, defocus):
     logger.info(f"Computing Fresnel Fringes Boxsize")
-    result = ctf_delocalization_distance_A(particle_diameter=args.particle_diameter,
-                            lambda_=                      relativistic_electron_wavelength_A    (voltage_kV=args.voltage), # [Å]
-                            resolution=args.resolution,
-                            defocus=args.defocus*1e4)  # µm to Å
+    result = ctf_delocalization_distance_A(
+                            particle_diameter_A=particle_diameter,
+                            lambda_A           =relativistic_electron_wavelength_A(voltage_kV=voltage_kV),
+                            resolution_A=resolution,
+                            defocus_A=defocus*1e4)  # µm to Å
     logger.info(f"Suggested boxsize: {result} pixels")
     return result
 
