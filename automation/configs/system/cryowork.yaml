@@ -20,7 +20,7 @@ system:
     
     negative_estimation: 
       env : python_cryoem_tools
-      path: /lustre1/home/senda-em/emdata_senda-em/apps/cryoem_tools/src/spa/analyses/negative_estimation.py
+      path: /lustre1/home/senda-em/emdata_senda-em/apps/cryoem_tools/src/spa/analyses/negative_density.py
 
     volume_alignment: 
       env : python_cryoem_tools
@@ -32,7 +32,7 @@ system:
 
     binning_parameters:
       env: python_cryoem_tools
-      path: /lustre1/home/senda-em/emdata_senda-em/apps/cryoem_tools/src/spa/analyses/calc_binning_parameters.py
+      path: /lustre1/home/senda-em/emdata_senda-em/apps/cryoem_tools/src/spa/analyses/binning_parameters.py
 
     extract_boxes:
       env: python_cryoem_tools
