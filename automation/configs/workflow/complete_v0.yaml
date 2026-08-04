@@ -1,0 +1,166 @@
+workflow:
+  ### REFERENCE VOLUME ALIGNMENT ###
+  #### 1. Create Mask for alignment
+  #### 2. Align Volume and Mask
+  #### 3. Calc Mask Size to load some volume properties (future: replace by a stats method)
+  - name: create_mask-reference_volume # gmm mode
+    command: deepmasc_contour
+    args:
+      - "--input_map_path": {from: input.user.reference_map_filepath}
+      - "--output_folder" :  "$OUTDIR"
+      - "--gpu_id"        : "0,1"
+      - "--num_components": "2"
+      - "--batch_size"    : "8"
+      - "--morph_radius"  : "3"
+      - "--mask_diameter" : "95"
+      - "--cutoff_prob"   : "0.3"
+
+  - name: volume_alignment-reference_volume
+    command: volume_alignment
+    args:
+      - "--volume"    : {from: input.user.reference_map_filepath}
+      - "--mask"      : "$BASEDIR/create_mask-reference_volume/prot_mask_final.mrc"
+      - "--json"
+      - "--save"
+      - "--verbose"
+      - "--output-dir": "$OUTDIR"
+
+  - name: calc_size-reference_volume
+    command: size_estimation
+    args:
+      - "--json"
+      - "--volume": "$BASEDIR/create_mask-reference_volume/prot_mask_final.mrc"
+
+  ### FRESNEL BOX SIZE ###
+  - name: calc_fresnel_boxsize
+    command: boxsize_analysis
+    args:
+      - "--json"
+      - "fresnel"
+      - "--particle_diameter": {from: workflow.calc_size-reference_volume.output.diameter}
+      - "--voltage"          : {from: input.em_settings.EM_kV}
+      - "--defocus"          : {from: input.user.defocus, default: 1}
+      - "--resolution"       : {from: input.user.target_resolution, default: 3}
+
+  ### LBIN ###
+  #### 1. Calc Upsampling parameters
+  #### 2. CTF Limit box size
+  #### 3. Upsample the map
+  #### 4. Create a mask for it
+  #### 5. Compute mask size
+
+  - name: calc_params-lbin
+    command: binning_parameters
+    args:
+      - "--json"
+      - "--box_size"         : {from: workflow.calc_size-reference_volume.output.shape}
+      - "--pixel_size"       : {from: input.em_settings.EM_mics_apix}
+      - "--target_pixel_size": {from: input.user.target_pixel_size_for_large_binning}
+
+  - name: calc_ctf_boxsize-lbin
+    command: boxsize_analysis
+    args:
+      - "--json"
+      - "--output-dir": "$OUTDIR"
+      - "opt"
+      - "--pixel_size": {from: workflow.calc_params-lbin.output.binned_pixel_size}
+      - "--voltage"   : {from: input.em_settings.EM_kV}
+      - "--defocus"   : {from: input.user.defocus, default: 1}
+      - "--cs"        : {from: input.em_settings.EM_Cs}
+      - "--save_plots"
+
+  - name: calc_extract_boxes-lbin
+    command: extract_boxes
+    args:
+      - "--json"
+      - "--binning_factor"     : {from: workflow.calc_params-lbin.output.binning_factor}
+      - "--target_rescaled_box": {from: workflow.calc_ctf_boxsize-lbin.output.boxsize}
+
+  - name: create_volume-lbin
+    command: relion_image_handler
+    args:
+      - "--i"             : {from: input.user.reference_map_filepath}
+      - "--angpix"        : {from: input.em_settings.EM_mics_apix} 
+      - "--rescale_angpix": {from: workflow.calc_params-lbin.output.binned_pixel_size}
+      - "--new_box"       : {from: workflow.calc_extract_boxes-lbin.output.rescaled_box}
+      - "--o": "$OUTDIR/lbin.mrc"
+
+  - name: create_mask-lbin # gmm mode
+    command: deepmasc_contour
+    args:
+      - "--input_map_path": "$BASEDIR/create_volume-lbin/lbin.mrc"
+      - "--output_folder" : "$OUTDIR"
+      - "--gpu_id"        : "0:1"
+      - "--num_components": "2"
+      - "--batch_size"    : "8"
+      - "--morph_radius"  : "3"
+      - "--mask_diameter" : "95"
+      - "--cutoff_prob"   : "0.3"
+
+  - name: calc_mask_size-lbin
+    command: size_estimation
+    args:
+      - "--json"
+      - "--volume": "$BASEDIR/create_mask-lbin/prot_mask_final.mrc"
+ 
+  ### MBIN ###
+  #### 1. Calc Upsampling parameters
+  #### 2. CTF Limit box size
+  #### 3. Upsample the map
+  #### 4. Create a mask for it
+  #### 5. Compute mask size
+  - name: calc_params-mbin
+    command: binning_parameters
+    args:
+      - "--json"
+      - "--box_size"         : {from: workflow.calc_size-reference_volume.output.shape}
+      - "--pixel_size"       : {from: input.em_settings.EM_mics_apix} 
+      - "--target_pixel_size": {from: input.user.target_pixel_size_for_medium_binning}
+
+  - name: calc_ctf_boxsize-mbin
+    command: boxsize_analysis
+    args:
+      - "--json"
+      - "--output-dir": "$OUTDIR"
+      - "opt"
+      - "--pixel_size": {from: workflow.calc_params-mbin.output.binned_pixel_size}
+      - "--voltage"   : {from: input.em_settings.EM_kV}
+      - "--defocus"   : {from: input.user.defocus, default: 1}
+      - "--cs"        : {from: input.em_settings.EM_Cs}
+      - "--save_plots"
+
+  # in the future, it decides if input is CTF our negative density
+  - name: calc_extract_boxes-mbin
+    command: extract_boxes
+    args:
+      - "--json"
+      - "--binning_factor"     : {from: workflow.calc_params-mbin.output.binning_factor}
+      - "--target_rescaled_box": {from: workflow.calc_ctf_boxsize-mbin.output.boxsize}
+
+  - name: create_volume-mbin
+    command: relion_image_handler
+    args:
+      - "--i"             : {from: input.user.reference_map_filepath}
+      - "--angpix"        : {from: input.em_settings.EM_mics_apix} # reference map has truncated header... 
+      - "--rescale_angpix": {from: workflow.calc_params-mbin.output.binned_pixel_size}
+      - "--new_box"       : {from: workflow.calc_extract_boxes-mbin.output.rescaled_box}
+      - "--o": "$OUTDIR/mbin.mrc"
+
+  - name: create_mask-mbin # cryoread mode
+    command: deepmasc_contour
+    args:
+      - "--input_map_path": "$BASEDIR/create_volume-mbin/mbin.mrc"
+      - "--output_folder" : "$OUTDIR" # main.py:--output-dir must be the absolute path for this to work
+      - "--gpu_id"        : "0:1"
+      - "--num_components": "2"
+      - "--batch_size"    : "8"
+      - "--morph_radius"  : "3"
+      - "--mask_diameter" : "95"
+      - "--cutoff_prob"   : "0.3"
+      # - "--refinement_mask" # gmm mode for testing
+
+  - name: calc_mask_size-mbin
+    command: size_estimation
+    args:
+      - "--json"
+      - "--volume": "$BASEDIR/create_mask-mbin/prot_mask_final.mrc"
