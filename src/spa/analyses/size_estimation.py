@@ -92,7 +92,7 @@ if __name__ == "__main__":
     # print and save output
     output = utils.output.print_and_save(result, 
                                          print_as="json" if args.json else "yaml",
-                                         filepath=os.path.join(basedir, "size_estimation") if basedir else None)
+                                         filepath=os.path.join(basedir, __myname__) if basedir else None)
     logger.info(f"Result:\n{output['yaml']}")
     logger.info(f"Exiting...")
     logger.info("-"*40)

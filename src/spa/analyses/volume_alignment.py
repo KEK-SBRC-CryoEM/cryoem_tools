@@ -124,7 +124,7 @@ if __name__ == "__main__":
     alignment_data["mask"]   = amask_path
     output = utils.output.print_and_save(alignment_data, 
                                         print_as="json" if args.json else "yaml",
-                                        filepath=os.path.join(basedir, "size_estimation") if basedir else None)
+                                        filepath=os.path.join(basedir, __myname__) if basedir else None)
     
     logger.info(f"Result:\n{output['yaml']}")
     logger.info(f"Exiting...")
