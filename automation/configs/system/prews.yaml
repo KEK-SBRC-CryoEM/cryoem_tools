@@ -1,0 +1,39 @@
+system:
+  env:
+    python_deepmasc    : /home/tmoriya/.pyenv/versions/anaconda3-2025.06-1/envs/DeepMASC/bin/python
+    python_cryoem_tools: /home/tmoriya/.pyenv/versions/anaconda3-2025.06-1/envs/dev/bin/python
+
+  toolbox:
+    python:
+      path: /home/tmoriya/.pyenv/versions/anaconda3-2025.06-1/envs/dev/bin/python
+      
+    relion_image_handler:
+      path: /apps/packages/relion-5.0/build/bin/relion_image_handler
+
+    deepmasc_contour: 
+      env : python_deepmasc
+      path: /home/tmoriya/shared_for_all/apps/DeepMASC/contour.py
+
+    size_estimation: 
+      env : python_cryoem_tools
+      path: /home/tmoriya/shared_for_all/apps/rln_external/negative_region/size_estimation.py
+    
+    negative_estimation: 
+      env : python_cryoem_tools
+      path: /home/tmoriya/shared_for_all/apps/rln_external/negative_region/negative_estimation.py
+
+    volume_alignment: 
+      env : python_cryoem_tools
+      path: /home/tmoriya/shared_for_all/apps/rln_external/negative_region/volume_alignment.py
+
+    boxsize_analysis:
+      env : python_cryoem_tools
+      path: /home/tmoriya/shared_for_all/apps/rln_external/ctf_analysis/boxsize_analysis.py
+
+    binning_parameters:
+      env: python_cryoem_tools
+      path: /home/tmoriya/shared_for_all/apps/rln_external/utils/calc_binning_parameters.py
+
+    extract_boxes:
+      env: python_cryoem_tools
+      path: /home/tmoriya/shared_for_all/apps/rln_external/utils/compute_extraction_boxes.py

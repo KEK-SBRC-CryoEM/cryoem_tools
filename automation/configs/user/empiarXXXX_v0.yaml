@@ -1,0 +1,32 @@
+input:
+    user: 
+        ### reference map ###
+        # reference_map_filepath: inputs/emd_0407.map
+
+        ### cs-schemes inputs ###
+        # em_settings_filepath    : 
+        # sample_settings_filepath: 
+        
+        ### microscope related ###
+        defocus: 1.8
+        target_resolution: 5
+
+        ### micrograph related ###
+        micrograph_upper_bound_x: 3838 # number of rows
+        micrograph_upper_bound_y: 3710 # number of cols
+
+        ### binning factor ###
+        # large_binning_factor : 4.00
+        # medium_binning_factor: 1.24
+        target_pixel_size_for_large_binning : 8
+        target_pixel_size_for_medium_binning: 1
+
+        ### padding type ###
+        # padding_pixels    : 0
+        # padding_angstrom  : 0.0
+        padding_percentage: 0.2
+   
+    em_settings:
+        EM_kV: 200
+        EM_mics_apix: 0.5585
+        EM_Cs: 2.7
