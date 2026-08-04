@@ -315,10 +315,9 @@ def css_run(css_settings, workflow_data, basedir, debug=False):
                 pickle.dump(css_result, file)
 
         # final output
-        utils.handle_output(css_result, 
-                            to_json=False, 
-                            filename=os.path.join(basedir, "csschemes_sample.yaml"),
-                            show=False)
+        _ = utils.output.print_and_save(css_result, 
+                                        print_as=None,
+                                        filepath=os.path.join(basedir, "css_parameters.yaml") if basedir else None)
 
     return css_result
 
@@ -387,7 +386,10 @@ if __name__ == "__main__":
     except Exception:
         # if DEBUG: capture the error stack
         logger.error("Pipeline Crashed!!".upper(), exc_info=args.debug)
-        
+
+    logger.info(f"Exiting...")
+    logger.info("-"*40)
+
 
 
     
