@@ -53,7 +53,7 @@ workflow:
     command: binning_parameters
     args:
       - "--json"
-      - "--box_size"         : {from: workflow.calc_size-reference_volume.output.voxel_size_A_per_px}
+      - "--box_size"         : {from: workflow.calc_size-reference_volume.output.shape}
       - "--pixel_size"       : {from: input.em_settings.EM_mics_apix}
       - "--target_pixel_size": {from: input.user.target_pixel_size_for_large_binning}
 
