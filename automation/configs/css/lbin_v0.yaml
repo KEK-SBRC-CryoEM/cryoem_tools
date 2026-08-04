@@ -5,7 +5,7 @@ css:
       - name: padding
         args:
           - particle_diameter : {from: workflow.calc_size-reference_volume.output.diameter}
-          - pixel_size        : {from: workflow.calc_size-reference_volume.output.voxel_size}
+          - pixel_size        : {from: workflow.calc_size-reference_volume.output.voxel_size_A_per_px}
           - padding_pixels    : {from: input.user.padding_pixels    , default: 0}
           - padding_angstrom  : {from: input.user.padding_angstrom  , default: 0}
           - padding_percentage: {from: input.user.padding_percentage, default: 0}
