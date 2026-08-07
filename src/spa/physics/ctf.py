@@ -46,7 +46,7 @@ def ctf_delocalization_distance_A(particle_diameter_A, lambda_A, resolution_A, d
     return particle_diameter_A + 2*defocus_A*(lambda_A/resolution_A) # [Å]
 
 
-def ctf_period(defocus_A, cs_A, lambda_, frequency): #*
+def ctf_period(frequency, lambda_A, defocus_A, cs_A): #*
     r"""
     Calculate the local oscillation period of the Contrast Transfer Function (CTF) at a given spatial frequency.
     
@@ -60,7 +60,7 @@ def ctf_period(defocus_A, cs_A, lambda_, frequency): #*
     Parameters:
         defocus_A (float) : defocus value in [Å].
         cs_A      (float) : spherical aberration constant in [Å].
-        lambda_   (float) : relativistic electron wavelength in [Å].
+        lambda_A   (float) : relativistic electron wavelength in [Å].
         frequency (float) : spatial frequency in [Å⁻¹] at which to compute the CTF oscillation period.
 
     Returns:
@@ -71,9 +71,8 @@ def ctf_period(defocus_A, cs_A, lambda_, frequency): #*
 			1) precompute A and B, or
 			2) solve for T: 2*z*lambda*f^2 - c*lambda^3*f^4 = 2*z*lambda*(f+T)^2 - c*(lambda^3)*(f+T)^4 +1
     """
-    # pre-computing (if this function is a bottle-neck, we could cache A and B)
-    A  = 0.5 * defocus_A * lambda_
-    B  = 0.25 * cs_A * lambda_**3
+    A  = 0.5 * defocus_A * lambda_A
+    B  = 0.25 * cs_A * lambda_A**3
     f2 = frequency**2
 
     # solve a 4th order polynomial to compute the local CTF period
@@ -123,7 +122,7 @@ def ctf_limit(boxsize, pixel_size, voltage, defocus, cs, limit_resolution=15): #
     partial_ctf_period = partial(ctf_period,
                                 defocus_A = defocus*1e4,  # Convert µm to Å
                                 cs_A      = cs*1e7,       # Convert mm to Å
-                                lambda_   = physics.relativistic_electron_wavelength_A(voltage_kV=voltage) # [Å]
+                                lambda_A  = physics.relativistic_electron_wavelength_A(voltage_kV=voltage) # [Å]
     )
 
     # 5. If no aliasing detected, default to Nyquist
@@ -155,38 +154,37 @@ def ctf_limit(boxsize, pixel_size, voltage, defocus, cs, limit_resolution=15): #
 
     return bin_result, frequency_result
 
-def phaseshift_ctf(lambda_, pixel_size, defocus, cs, boxsize): #_heel
-    '''
+def phaseshift_ctf(box_size, pixel_size_A_per_pix, lambda_A, defocus_A, cs_A):
+    r'''
     from: Principles of Phase Contrast (Electron) Microscopy - Marin van Heel
         - PhCTF(f) = sin(\frac{2\pi}{\lambda}[\frac{-C_s \lambda ^4 f^4}{4} + \frac{\Delta F \lambda ^2 f^2}{2}])
 
     arguments:
-        - lambda_: relativistic electron wavelength in Å
-        - pixel_size
-        - defocus in Å
-        - cs in Å (it actually asks in mm, but the units wont cancel out)
+        - lambda_A: relativistic electron wavelength in Å
+        - pixel_size_A_per_pix
+        - defocus_A: positive for underfocus
+        - cs_A
         - boxsize
         
     '''
-    nyquist = 1/(2*pixel_size)
-    f  = nyquist/(boxsize//2) * np.arange(1+boxsize//2, dtype=np.float64) # spatial frequencies
-    # f = np.fft.fftfreq(boxsize, d=pixel_size)
+    freq = np.fft.rfftfreq(box_size, d=pixel_size_A_per_pix)
 
     # complete
-    # a = 2*np.pi/lambda_
-    # b = -(cs* lambda_**4 * f**4)/4
-    # c = (defocus * lambda_**2 * f**2)/2
-    # gamma = a*(b+c) # = phase_shift
+    # a = 2*np.pi/lambda_A
+    # b = -(cs* lambda_A**4 * f**4)/4
+    # c = (defocus_A * lambda_A**2 * f**2)/2
+    # gamma = a*(b+c) # =: phase_shift
     # phaseshift_ctf = np.sin(gamma)
 
     # simplified
-    f2 = f**2
-    a = (cs * (lambda_**3) * f2)/2
-    b = defocus * lambda_
-    gamma = np.pi*f2*(a+b)
+    f2 = freq**2
+    a = (cs_A * (lambda_A**3) * f2)/2
+    b = defocus_A * lambda_A
+    gamma = np.pi*f2*(a-b)
     phaseshift_ctf = -np.sin(gamma)
 
-    return f, phaseshift_ctf
+    return {"frequency"     : freq,
+            "phaseshift_ctf": phaseshift_ctf}
 
 def phaseshift_ctf2d(lambda_, pixel_size, defocus, cs, boxsize):
     nyquist = 1/(2*pixel_size)
