@@ -10,6 +10,7 @@ description = "KEK/SBRC CryoEM SPA Tools"
 
 dependencies    = ["numpy",
                    "scipy",
+                   "pandas",
                    "opencv-python",
                    "matplotlib",
                    "pyyaml",
