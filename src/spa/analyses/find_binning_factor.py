@@ -322,7 +322,7 @@ if __name__ == "__main__":
             "all_solutions_label"     : "No prime factors ≤13", # "unfeasible"
             "feasible_solutions_label": "Dominated",
             "pareto_labels"           : ["Differ in box compatibility"],
-            "filepath"    : os.path.join(basedir, f"pareto_{args.target_resolution}Å.png") if basedir else None,
+            "filepath"    : os.path.join(basedir, f"pareto_{args.pixel_size}ÅperPixel_{args.target_resolution}Å.png") if basedir else None,
         }
 
         plot_pareto(_toplot, all_solutions=True, feasible_solutions=True, **plot_args)
