@@ -40,11 +40,6 @@ def prime_factors(n):
 
     return tuple(factors)
 
-def prime_factors_to_str(factors: dict):
-    # dict output from prime_factorization
-    terms = [f"{k}^{v}" if v > 0 else str(k) for k, v in factors.items() if v != 0]
-    return " x ".join(terms) if terms else "1"
-
 def prime_factorization(n, allowed_primes=(2,3,5,7,11,13)):
     # guard
     if n==0: 
@@ -65,6 +60,11 @@ def prime_factorization(n, allowed_primes=(2,3,5,7,11,13)):
     if remainder!=1:
         return None
     return factors
+
+def prime_factors_to_str(factors: dict):
+    # dict output from prime_factorization
+    terms = [f"{k}^{v}" if v > 0 else str(k) for k, v in factors.items() if v != 0]
+    return " x ".join(terms) if terms else "1"
 
 def has_allowed_prime_factors(n, allowed_primes=(2,3,5,7,11,13)):
     """
