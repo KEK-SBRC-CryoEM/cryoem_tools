@@ -22,8 +22,35 @@ FFT_FRIENDLY_SIZES = np.array([24, 32, 36, 40, 44, 48, 52, 56, 60, 64,
 ],dtype=np.int32,)
 FFT_FRIENDLY_SIZES.flags.writeable = False
 
+def filter_fft_friendly_sizes(min_size:int|None=None, max_size:int|None=None, 
+                              divisible_by:int|tuple[int, ...] =(2,)) -> np.ndarray:
+    """
+    Filter EMAN2 FFT-friendly box sizes by size range and divisibility.
 
-def adjust_box(box:int|float, scaling:float=1, fft_friendly:bool=False, make_even:bool=False):
+    Parameters
+    ----------
+    min_size : (optional) int
+        Minimum box size to include.
+    max_size : (optional) int
+        Maximum box size to include.
+    divisible_by : (optional) iterable of int
+        Keep sizes divisible by all specified values.
+    """
+    max_size = min([max_size if max_size else  np.inf, np.max(FFT_FRIENDLY_SIZES)])
+    min_size = max([min_size if min_size else -np.inf, np.min(FFT_FRIENDLY_SIZES)])
+    filtered = FFT_FRIENDLY_SIZES[(FFT_FRIENDLY_SIZES>=min_size) & (FFT_FRIENDLY_SIZES<=max_size)]
+
+    # guard for None
+    if divisible_by:
+        # guard for divisible_by=(2) or divisible_by=2
+        divisible_by = (divisible_by,) if np.isscalar(divisible_by) else divisible_by
+        
+        mask = np.all([filtered % n == 0 for n in set(divisible_by)], axis=0)
+        filtered = filtered[mask]
+    
+    return filtered
+
+def adjust_box(box:int|float, scaling:float=1, fft_friendly:bool=False, make_even:bool=False) -> int:
     """Apply box-size adjustments in the following order:
         1. Scale the box size by ``scaling``.
         2. Round up to an FFT-friendly value if ``fft_friendly`` is True.
