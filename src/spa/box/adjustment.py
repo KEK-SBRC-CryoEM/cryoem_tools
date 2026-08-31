@@ -22,8 +22,8 @@ FFT_FRIENDLY_SIZES = np.array([24, 32, 36, 40, 44, 48, 52, 56, 60, 64,
 ],dtype=np.int32,)
 FFT_FRIENDLY_SIZES.flags.writeable = False
 
-def filter_fft_friendly_sizes(min_size:int|None=None, max_size:int|None=None, 
-                              divisible_by:int|tuple[int, ...] =(2,)) -> np.ndarray:
+def get_fft_friendly_sizes(min_size:int|None=None, max_size:int|None=None, 
+                           divisible_by:int|tuple[int, ...] =(2,)) -> np.ndarray:
     """
     Filter EMAN2 FFT-friendly box sizes by size range and divisibility.
 
