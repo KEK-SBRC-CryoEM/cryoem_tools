@@ -149,7 +149,7 @@ def plot_pareto(solutions, all_solutions=False, feasible_solutions=False,
 def find_binning_parameters(target_resolution_A, pixel_size_A_per_pixel, sampling_factor, 
                             evaluation_boxes,
                             evaluation_feasible_primes,
-                            grid_step=6, resolution_search_radius=0.2):
+                            grid_step=Fraction(1, 10**6), resolution_search_radius=0.2):
     # guarantees it is a np.array
     evaluation_boxes = np.asarray(evaluation_boxes)
 
@@ -195,7 +195,6 @@ def find_binning_parameters(target_resolution_A, pixel_size_A_per_pixel, samplin
     _false = np.full(len(evaluation_boxes), False)
     compatible_boxes_mask  = np.array([((b*evaluation_boxes)%2)==0 if m else _false for b, m in zip(candidate_binnings, mask_feasible)])
     count_compatible_boxes = compatible_boxes_mask.sum(axis=1)
-    
 
     # update feasiblity for the rare case a candidate binning has no compatible box
     mask_feasible &= (count_compatible_boxes>0)
@@ -311,8 +310,8 @@ if __name__ == "__main__":
     pareto_csv = pd.DataFrame({"binning_factor"             :_view["binning_factor"].astype(float),
                                "binned_pixel_size"          :_view["binned_pixel_size"].astype(float),
                                "target_resolution"          :_view["target_resolution"].astype(float),
-                               "count_compatible_EMAN2boxes":_view["count_compatible_boxes"],
                                "compatibility_factors"      :_view["binning_factor"].apply(lambda b: numbers.prime_factors_to_str(numbers.prime_factorization(b.denominator))),
+                               "count_compatible_EMAN2boxes":_view["count_compatible_boxes"],
                                "compatible_boxes"           :_view["mask_compatible_boxes"].apply(lambda m: fft_sizes_filtered[m]).to_list()
     })
     logger.info("Recommended binning factor: ")
@@ -352,7 +351,6 @@ if __name__ == "__main__":
         logger.info(f"+ Saved to {filepath}")
     else:
         logger.info("For additional information, consider providing '--output-dir'.")
-
 
     logger.info(f"Exiting...")
     logger.info("-"*40)
