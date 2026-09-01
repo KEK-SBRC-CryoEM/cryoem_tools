@@ -45,7 +45,7 @@ def get_fft_friendly_sizes(min_size:int|None=None, max_size:int|None=None,
         # guard for divisible_by=(2) or divisible_by=2
         divisible_by = (divisible_by,) if np.isscalar(divisible_by) else divisible_by
         
-        mask = np.all([filtered % n == 0 for n in set(divisible_by)], axis=0)
+        mask = np.any([filtered % n == 0 for n in set(divisible_by)], axis=0)
         filtered = filtered[mask]
     
     return filtered
