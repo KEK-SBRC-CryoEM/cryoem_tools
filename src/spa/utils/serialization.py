@@ -3,17 +3,6 @@ import numpy as np
 import json
 import yaml
 
-#### JSON ####
-class NumpyEncoder(json.JSONEncoder):
-    def default(self, obj):
-        if isinstance(obj, np.integer):
-            return int(obj)      # np.int64   to int
-        if isinstance(obj, np.floating):
-            return float(obj)    # np.float64 to float
-        if isinstance(obj, np.ndarray):
-            return obj.tolist()  # array      to list
-        return super().default(obj)
-
 #### YAMl ####
 def load_yaml(filepath):
     """
@@ -24,11 +13,32 @@ def load_yaml(filepath):
             return yaml.safe_load(yaml_file)
     return None
 
-def setup_representer_yaml():
-    yaml.SafeDumper.add_representer(np.int64, 
-        lambda dumper, x: dumper.represent_int(x.item()))
-    yaml.SafeDumper.add_representer(np.float64, 
-        lambda dumper, x: dumper.represent_float(x.item()))    
-    yaml.SafeDumper.add_representer(np.ndarray, 
-        lambda dumper, x: dumper.represent_list(x.tolist()))
+class YAMLDumper(yaml.SafeDumper):
+    @classmethod
+    def setup(cls):
+        cls.add_representer(
+            np.integer,
+            lambda dumper, x: dumper.represent_int(x.item()))
+        cls.add_representer(
+            np.floating,
+            lambda dumper, x: dumper.represent_float(x.item()))
+        cls.add_representer(
+            np.ndarray,
+            lambda dumper, x: dumper.represent_sequence(
+            "tag:yaml.org,2002:seq",
+            x.tolist(),
+            flow_style=True))
+
+#### JSON ####
+class JSONEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, np.integer):  # np.int64 to int
+            return int(obj)            
+        if isinstance(obj, np.floating): # np.float64 to float
+            return float(obj)    
+        if isinstance(obj, np.ndarray):  # array to list
+            return obj.tolist()  
+        return super().default(obj)
     
+
+YAMLDumper.setup()

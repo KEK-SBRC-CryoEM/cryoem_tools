@@ -30,9 +30,9 @@ def print_and_save(output, print_as=None, filepath=None):
     """
 
     # conversion
-    serialization.setup_representer_yaml()
-    result = {"yaml": yaml.safe_dump(output, sort_keys=False),
-              "json": json.dumps(output, cls=serialization.NumpyEncoder, indent=2)
+    # serialization.setup_representer_yaml()
+    result = {"yaml": yaml.dump(output, sort_keys=False, Dumper=serialization.YAMLDumper),
+              "json": json.dumps(output, cls=serialization.JSONEncoder, indent=2)
     }
 
     # save
