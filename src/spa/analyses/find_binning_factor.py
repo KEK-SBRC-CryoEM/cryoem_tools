@@ -187,7 +187,7 @@ def find_binning_parameters(target_resolution_A, pixel_size_A_per_pixel, samplin
     _false = np.full(len(evaluation_boxes), False)
     compatible_boxes_mask  = np.array([((b*evaluation_boxes)%2)==0 if m else _false for b, m in zip(candidate_binnings, mask_feasible)])
     # minimization -> 0:compatible, 1:incompatible
-    incompatibility_mask     = np.array([(~m).astype(int) for m in compatible_boxes_mask])
+    # incompatibility_mask     = np.array([(~m).astype(int) for m in compatible_boxes_mask])
     count_compatible_boxes = compatible_boxes_mask.sum(axis=1)
     
 
@@ -208,7 +208,8 @@ def find_binning_parameters(target_resolution_A, pixel_size_A_per_pixel, samplin
                             # objectives
                             "n_decimals_pixel"        : n_decimals_pixel, 
                             "d_resolution"            : d_resolution,
-                            "incompatible_boxes"      : list(incompatibility_mask),
+                            "mask_compatible_boxes"   : list(compatible_boxes_mask),
+                            # "incompatible_boxes"      : list(incompatibility_mask),
                             # additional information
                             "n_decimals_binning"      : n_decimals_binning, 
                             "is_worse_than_target"    : is_worse_than_target,
@@ -222,9 +223,13 @@ if __name__ == "__main__":
     parser.add_argument("-p", "--pixel_size"       , type=float, required=True, help="Current Pixel Size")
     parser.add_argument("-t", "--target_resolution", type=float, required=True, help="Target Resolution")
     # optionals
-    parser.add_argument("--sampling_factor", type=float, default=3,    help="Nyquist: 2. Oversampling >2")
-    parser.add_argument("--search_radius_A", type=float, default=0.2,  help="Range around the target resolution to search [Å].")
-    parser.add_argument("--search_step",     type=float, default=1e-6, help="Step size between candidate resolutions [Å].")
+    parser.add_argument("--sampling_factor",                type=float, default=3,    help="Nyquist: 2. Oversampling >2")
+    parser.add_argument("--search_resolution_radius",       type=float, default=0.2,  help="Range around the target resolution to search [Å].")
+    parser.add_argument("--search_resolution_step",         type=float, default=1e-6, help="Step size between candidate resolutions [Å].")
+    parser.add_argument("-lb", "--compatible-box-min-size", type=int,   default=64,   help="Minimum FFT-friendly box size considered for compatibility (default: 64).")
+    parser.add_argument("-ub", "--compatible-box-max-size", type=int,   default=1024, help="Maximum FFT-friendly box size considered for compatibility (default: 1024).")
+    parser.add_argument("-db", "--compatible-box-divisible-by", type=int, nargs="+", default=(2,), help="Only consider FFT-friendly box sizes divisible by the input values (default: 2).")
+
     parser = utils.cli.add_common_arguments(parser) # adds --verbose, --json, --output-dir --debug
     args = parser.parse_args()
 
@@ -239,23 +244,31 @@ if __name__ == "__main__":
         utils.cli.log_cli_header(logger=logger, script_name=__myname__, args=args)
 
     # computation
+    fft_sizes_filtered = box.get_fft_friendly_sizes(min_size=args.compatible_box_min_size, 
+                                                    max_size=args.compatible_box_max_size,
+                                                    divisible_by=args.compatible_box_divisible_by)
+    logger.info("FFT-friendly box sizes considered for binning factor compatibility:")
+    logger.info(f"+ Filtering by size range: [{args.compatible_box_min_size}, {args.compatible_box_max_size}]")
+    logger.info(f"+ Filtering by divisibility: {", ".join(map(str, args.compatible_box_divisible_by))}")
+    logger.info(f"+ Available sizes: {len(fft_sizes_filtered)}")
+
     logger.info("Exhaustive evaluation of binning parameters...")
     history = find_binning_parameters(target_resolution_A        = args.target_resolution, 
                                       pixel_size_A_per_pixel     = args.pixel_size, 
                                       sampling_factor            = args.sampling_factor,
-                                      evaluation_boxes           = box.FFT_FRIENDLY_SIZES,
+                                      evaluation_boxes           = fft_sizes_filtered,
                                       evaluation_feasible_primes = (2, 3, 5, 7, 11, 13),
-                                      step                       = args.search_step, 
-                                      search_radius_A            = args.search_radius_A)
+                                      step                       = args.search_resolution_step, 
+                                      search_radius_A            = args.search_resolution_radius)
     logger.info(f"+ Total candidates  : {len(history)}")
     logger.info("Checking feasibility...")
     _count = (~history["has_prime_factor"]).sum()
-    logger.info(f"+ Filtering in  candidates with prime factors ≤ 13     : {_count}")
+    logger.info(f"+ Filtering out candidates with prime factors > 13     : {_count}")
     _count = (history["has_prime_factor"] & ~(history["has_finite_binning"] & history["has_finite_pixel"])).sum()
     logger.info(f"+ Filtering out candidates with infinite decimal places: {_count}")
     _count = (history["has_prime_factor"] & history["has_finite_binning"] & history["has_finite_pixel"] & (history["count_compatible_boxes"]==0)).sum()
     logger.info(f"+ Filtering out candidates with no box compatibility   : {_count}")
-    logger.info(f"+ Feasible solutions: {len(history[history['is_feasible']])}")
+    logger.info(f"+ Feasible solutions: {history['is_feasible'].sum()}")
     if basedir and args.debug: # may generate heavy file
         filepath = os.path.join(basedir, f"history_{args.pixel_size}ÅperPixel_{args.target_resolution}Å.csv")
         history.to_csv(filepath, index=False)
@@ -267,9 +280,12 @@ if __name__ == "__main__":
 
     # compute pareto
     mask = history["is_feasible"]
+
+    # minimization -> 0:compatible, 1:incompatible
+    incompatibility_mask = history[mask]["mask_compatible_boxes"].apply(lambda m: (~m).astype(int))
     objectives = np.column_stack([history[mask]["n_decimals_pixel"].to_numpy(), 
                                   #history["is_feasible"]["d_resolution"].to_numpy(), 
-                                  history[mask]["incompatible_boxes"].to_list(),
+                                  incompatibility_mask.to_list(),
     ])
     pareto_idx_group = compute_pareto_front(objectives)
 
@@ -284,13 +300,12 @@ if __name__ == "__main__":
                                "binned_pixel_size"          : _view["binned_pixel_size"].astype(float),
                                "target_resolution"          : _view["target_resolution"].astype(float),
                                "count_compatible_EMAN2boxes": _view["count_compatible_boxes"],
-                               "compatibility_factors":_view["binning_factor"].apply(lambda b: numbers.prime_factors_to_str(numbers.prime_factorization(b.denominator))),
+                               "compatibility_factors"      :_view["binning_factor"].apply(lambda b: numbers.prime_factors_to_str(numbers.prime_factorization(b.denominator))),
+                               "compatible_boxes"           :_view["mask_compatible_boxes"].apply(lambda m: fft_sizes_filtered[m]).to_list()
     })
-
     logger.info("Recommended binning factor: ")
     result = {f"rank{i+1}":entry for i, entry in enumerate(pareto_csv.head(3).to_dict(orient="records"))} # "recors"->list of dicts, where each pd row is a dict
-    output = utils.output.print_and_save(result, 
-                                         #pareto_csv.iloc[0].to_dict(), 
+    output = utils.output.print_and_save(result,
                                          print_as="json" if args.json else ("yaml" if not args.verbose else None),
                                          filepath=os.path.join(basedir, __myname__) if basedir else None)
     logger.info(f"Top #{len(pareto_csv.head(3))} Results:\n\n{output['yaml']}")
