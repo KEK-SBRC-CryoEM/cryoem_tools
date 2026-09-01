@@ -86,11 +86,13 @@ p_\mathrm{max} = \frac{R_\mathrm{target}+r}{\text{sampling factor}},
 $$
 
 Pixel sizes are sampled on a decimal grid determined by the maximum allowed number of decimal places $d$:
+
 $$
 p_\mathrm{candidate} \in [p_\mathrm{min}, p_\mathrm{max}] \quad \text{with step size } 10^{-d}
 $$
 
 The corresponding binning factor $b$ is calculated as:
+
 $$
 b_\mathrm{candidate} = \frac{p_\mathrm{candidate}}{p_\text{user input}}
 $$
