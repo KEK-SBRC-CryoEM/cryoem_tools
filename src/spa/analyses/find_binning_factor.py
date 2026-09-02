@@ -68,7 +68,7 @@ def compute_pareto_front(objectives):
 def plot_pareto(solutions, all_solutions=False, feasible_solutions=False, 
         x_label="", y_label="", title_str="", subtitle_str="", legend_str="",
         all_solutions_label="", feasible_solutions_label="", pareto_labels=None,
-        filepath=None):
+        pareto_annotations=None, filepath=None):
     """
     Plot a 2D Pareto from a pandas dataframe.
 
@@ -126,6 +126,12 @@ def plot_pareto(solutions, all_solutions=False, feasible_solutions=False,
     for i in pareto_levels:
         _pareto = solutions[solutions["pareto"]==i]
         ax.scatter(_pareto["obj1"], _pareto["obj2"], color=tab10_red(i-1), s=50, edgecolors='none', label=pareto_labels[i-1])
+
+    # add annotation to solutions in the pareto
+    if pareto_annotations:
+        for i, label in pareto_annotations.items():
+            row = solutions.loc[i]
+            ax.annotate(label, (row["obj1"], row["obj2"]), textcoords="offset points", xytext=(0, 7), ha='center', fontsize=8)
 
     # extend y-axis a little to fit the legends
     ymin, ymax = ax.get_ylim()
@@ -346,8 +352,10 @@ if __name__ == "__main__":
                 all_solutions_label      = "Not Feasible", # "unfeasible"
                 feasible_solutions_label = "Dominated",
                 pareto_labels            = ["Differ in box compatibility"],
+                pareto_annotations       = pareto_csv["compatibility_factors"].to_dict(),
                 filepath                 = filepath
         )
+
         logger.info(f"+ Saved to {filepath}")
     else:
         logger.info("For additional information, consider providing '--output-dir'.")
