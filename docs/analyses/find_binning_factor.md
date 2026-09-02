@@ -67,7 +67,7 @@ Feel free to experiment with them using the details below.
 | Argument                               | Default | Description                                                                                          |
 | :------------------------------------- | :-----: | :----------------------------------------------------------------------------------------------------|
 | `--sampling_factor`                    |     `3` | Sampling factor used to relate pixel size and resolution. Nyquist sampling: `2`; Oversampling: `>2`. |
-| `--search_resolution_radius`           |   `0.2` | Acceptable deviation from the target resolution in Å.                                                |
+| `--resolution_tolerance`               |   `0.2` | Acceptable tolerance from the target resolution in Å.                                                |
 | `--pixel_max_decimals`                 |     `6` | Maximum number of decimal places allowed for the binned pixel size.                                  |
 | `-lb`, `--compatible-box-min-size`     |    `64` | Minimum FFT-friendly box size considered for compatibility (filters the EMAN2 list).                 |
 | `-ub`, `--compatible-box-max-size`     |  `1024` | Maximum FFT-friendly box size considered for compatibility (filters the EMAN2 list).                 |

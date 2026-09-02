@@ -155,13 +155,13 @@ def plot_pareto(solutions, all_solutions=False, feasible_solutions=False,
 def find_binning_parameters(target_resolution_A, pixel_size_A_per_pixel, sampling_factor, 
                             evaluation_boxes,
                             evaluation_feasible_primes,
-                            grid_step=Fraction(1, 10**6), resolution_search_radius=0.2):
+                            grid_step=Fraction(1, 10**6), resolution_tolerance=0.2):
     # guarantees it is a np.array
     evaluation_boxes = np.asarray(evaluation_boxes)
 
     ### search grid ###
-    start_res = Fraction(str(target_resolution_A - resolution_search_radius)) / sampling_factor
-    end_res   = Fraction(str(target_resolution_A + resolution_search_radius)) / sampling_factor
+    start_res = Fraction(str(target_resolution_A - resolution_tolerance)) / sampling_factor
+    end_res   = Fraction(str(target_resolution_A + resolution_tolerance)) / sampling_factor
     start_idx = math.ceil(start_res / grid_step)
     end_idx   = math.floor(end_res /  grid_step)
 
@@ -233,9 +233,9 @@ if __name__ == "__main__":
     parser.add_argument("-p", "--pixel_size"       , type=float, required=True, help="Current Pixel Size")
     parser.add_argument("-t", "--target_resolution", type=float, required=True, help="Target Resolution")
     # optionals
-    parser.add_argument("--sampling_factor",                type=float,default=3,    help="Nyquist: 2. Oversampling >2")
-    parser.add_argument("--search_resolution_radius",       type=float,default=0.2,  help="Range around the target resolution to search [Å].")
-    parser.add_argument("--pixel_max_decimals",             type=int,  default=6,    help="Maximum number of decimal places in the pixel size.")
+    parser.add_argument("--sampling_factor",                type=float,default=3,    help="Relate pixel size and resolution. Nyquist sampling: 2; Oversampling: >2")
+    parser.add_argument("--resolution_tolerance",           type=float,default=0.2,  help="Acceptable tolerance from the target resolution in Å.")
+    parser.add_argument("--pixel_max_decimals",             type=int,  default=6,    help="Maximum number of decimal places allowed for the binned pixel size.")
     parser.add_argument("-lb", "--compatible-box-min-size", type=int,  default=64,   help="Minimum FFT-friendly box size considered for compatibility (default: 64).")
     parser.add_argument("-ub", "--compatible-box-max-size", type=int,  default=1024, help="Maximum FFT-friendly box size considered for compatibility (default: 1024).")
     parser.add_argument("-db", "--compatible-box-divisible-by", type=int, nargs="+", default=(2,), help="Only consider FFT-friendly box sizes divisible by the input values (default: 2).")
@@ -271,7 +271,7 @@ if __name__ == "__main__":
                                       evaluation_boxes           = fft_sizes_filtered,
                                       evaluation_feasible_primes = (2, 3, 5, 7, 11, 13),
                                       grid_step                  = Fraction(1, 10**args.pixel_max_decimals),
-                                      resolution_search_radius   = Fraction(str(args.search_resolution_radius)))
+                                      resolution_tolerance       = Fraction(str(args.resolution_tolerance)))
     logger.info(f"+ Total candidates  : {len(history)}")
     logger.info("Checking feasibility...")
     _count = (~history["has_prime_factor"]).sum()
