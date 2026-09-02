@@ -345,14 +345,14 @@ if __name__ == "__main__":
         # plot
         filepath = os.path.join(basedir, f"pareto_{args.pixel_size}ÅperPixel_{args.target_resolution}Å.png") if basedir else None
         plot_pareto(_toplot, all_solutions=True, feasible_solutions=True, 
-                y_label                  = "Number of decimals on the Binned Pixel Size",
+                y_label                  = "Number of decimals in the Binned Pixel Size",
                 x_label                  = "Actual Target Resolution",
                 title_str                = f"Target Resolution: {args.target_resolution} Å",
                 legend_str               = "Candidate Solutions",
                 all_solutions_label      = "Not Feasible", # "unfeasible"
                 feasible_solutions_label = "Dominated",
                 pareto_labels            = ["Differ in box compatibility"],
-                pareto_annotations       = pareto_csv["compatibility_factors"].to_dict(),
+                pareto_annotations       = history[history["pareto"]>0]["binning_factor"].to_dict(),
                 filepath                 = filepath
         )
 
