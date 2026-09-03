@@ -22,7 +22,7 @@ logger = logging.getLogger(__myname__)
 # note: compute_pareto_front and plot_pareto are quite general
 #       if we end up needing to reuse these functions, it is better to move them to another package
 
-# Auxiliary methods for assessing prime-factors in the EMAN2 box-size list
+# Auxiliary methods for assessing prime-factors in the input box-size list
 def summarize_prime_factor_classes(sizes):
     counts = Counter(
         numbers.prime_factors(n)
@@ -31,11 +31,11 @@ def summarize_prime_factor_classes(sizes):
     return dict(sorted(counts.items(), key=lambda x: x[1], reverse=True))
 
 def _summarize():
-    logger.info("Assessing prime-factor groups in the EMAN2 box-size list.")
+    logger.info("Assessing prime-factor groups in the input box list.")
     counts = summarize_prime_factor_classes(box.FFT_FRIENDLY_SIZES)
     output = utils.output.print_and_save(counts, print_as="yaml", filepath=None)
     logger.info(f"Result:\n{output['yaml']}")
-    # output: primes in the EMAN2 list are (2,3,5,7,11,13)
+    # output for the EMAN2 list: (2,3,5,7,11,13)
 # /
 
 def compute_pareto_front(objectives):
@@ -238,7 +238,7 @@ if __name__ == "__main__":
     parser.add_argument("--pixel_max_decimals",             type=int,  default=6,    help="Maximum number of decimal places allowed for the binned pixel size.")
     parser.add_argument("-lb", "--compatible-box-min-size", type=int,  default=64,   help="Minimum FFT-friendly box size considered for compatibility (default: 64).")
     parser.add_argument("-ub", "--compatible-box-max-size", type=int,  default=1024, help="Maximum FFT-friendly box size considered for compatibility (default: 1024).")
-    parser.add_argument("-db", "--compatible-box-divisible-by", type=int, nargs="+", default=(2,), help="Only consider FFT-friendly box sizes divisible by the input values (default: 2).")
+    parser.add_argument("-db", "--compatible-box-divisible-by", type=int, nargs="+", default=(2, 4, 5, 8, 10), help="Only consider FFT-friendly box sizes divisible by the input values (default: 2, 4, 5, 8, 10).")
 
     parser = utils.cli.add_common_arguments(parser) # adds --verbose, --json, --output-dir --debug
     args = parser.parse_args()
@@ -291,13 +291,13 @@ if __name__ == "__main__":
     #### step 2: pareto front ####
     logger.info("Computing pareto front...")
     logger.info("+ Minimizing number of decimal places in the resulting binned pixel size...")
-    logger.info("+ Maximizing compatibility between binning factor and EMAN2 box...")
+    logger.info("+ Maximizing compatibility between binning factor and FFT-friendly box list...")
 
     # prepare objectives and compute pareto
     _mask = history["is_feasible"]
     _incompatibility_mask = history[_mask]["mask_compatible_boxes"].apply(lambda m: (~m).astype(int)) # minimization -> 0:compatible, 1:incompatible
-    objectives = np.column_stack([history[_mask]["n_decimals_pixel"].to_numpy(),
-                                  _incompatibility_mask.to_list()])
+    objectives = np.column_stack([_incompatibility_mask.to_list(), 
+                                  history[_mask]["n_decimals_pixel"].to_numpy()])
     _pareto_idx_group = compute_pareto_front(objectives)
 
     # update history
@@ -312,13 +312,13 @@ if __name__ == "__main__":
         logger.info(f"+ Search evaluation updated at {filepath}")
 
     # save csv with all solutions in the pareto
-    _view = history[history["pareto"]>0].sort_values(by=["n_decimals_pixel", "count_compatible_boxes", "d_resolution"], ascending=[True, False, True])
-    pareto_csv = pd.DataFrame({"binning_factor"             :_view["binning_factor"].astype(float),
-                               "binned_pixel_size"          :_view["binned_pixel_size"].astype(float),
-                               "target_resolution"          :_view["target_resolution"].astype(float),
-                               "compatibility_factors"      :_view["binning_factor"].apply(lambda b: numbers.prime_factors_to_str(numbers.prime_factorization(b.denominator))),
-                               "count_compatible_EMAN2boxes":_view["count_compatible_boxes"],
-                               "compatible_boxes"           :_view["mask_compatible_boxes"].apply(lambda m: fft_sizes_filtered[m]).to_list()
+    _view = history[history["pareto"]>0].sort_values(by=["count_compatible_boxes", "n_decimals_pixel", "d_resolution"], ascending=[False, True, True])
+    pareto_csv = pd.DataFrame({"binning_factor"         :_view["binning_factor"].astype(float),
+                               "binned_pixel_size"      :_view["binned_pixel_size"].astype(float),
+                               "target_resolution"      :_view["target_resolution"].astype(float),
+                               "compatibility_factors"  :_view["binning_factor"].apply(lambda b: numbers.prime_factors_to_str(numbers.prime_factorization(b.denominator))),
+                               "count_compatible_boxes" :_view["count_compatible_boxes"],
+                               "compatible_boxes"       :_view["mask_compatible_boxes"].apply(lambda m: fft_sizes_filtered[m]).to_list()
     })
     logger.info("Recommended binning factor: ")
     result = {f"rank{i+1}":entry for i, entry in enumerate(pareto_csv.head(3).to_dict(orient="records"))} # "recors"->list of dicts, where each pd row is a dict

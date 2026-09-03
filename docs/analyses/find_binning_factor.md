@@ -12,23 +12,23 @@ Target Resolution: 8.0
 The output is:
 ```YAML
 rank1:
-  binning_factor: 4.8
-  binned_pixel_size: 2.6808
-  target_resolution: 8.0424
-  compatibility_factors: 5^1
-  count_compatible_EMAN2boxes: 27
-  compatible_boxes: [100, 120, 140, 180, 220, 240, 260, 300, 320, 360, 440, 480, 540, 560, 600, 630, 640, 700, 720, 750, 800, 810, 840, 900, 960, 980, 1000]
-
-rank2:
   binning_factor: 4.75
   binned_pixel_size: 2.652875
   target_resolution: 7.958625
   compatibility_factors: 2^2
-  count_compatible_EMAN2boxes: 41
+  count_compatible_boxes: 41
   compatible_boxes: [64, 72, 96, 104, 112, 120, 128, 168, 192, 208, 216, 224, 240, 256, 288, 320, 352, 360, 384, 416, 440, 448, 480, 512, 560, 576, 600, 640, 648, 672, 720, 768, 784, 800, 840, 864, 896, 960, 1000, 1008, 1024]
+
+rank2:
+  binning_factor: 4.8
+  binned_pixel_size: 2.6808
+  target_resolution: 8.0424
+  compatibility_factors: 5^1
+  count_compatible_boxes: 27
+  compatible_boxes: [100, 120, 140, 180, 220, 240, 260, 300, 320, 360, 440, 480, 540, 560, 600, 630, 640, 700, 720, 750, 800, 810, 840, 900, 960, 980, 1000]
 ```
 
-Where the suggestions are ordered first by the number of decimal places in `binned_pixel_size`, and then by `count_compatible_EMAN2boxes`.
+Where the suggestions are ordered first by `count_compatible_boxes`, and then by the number of decimal places in `binned_pixel_size`.
 
 | Variable | Description |
 | :-------------------------- | :------------------------------------------------------------------------------- |
@@ -36,8 +36,8 @@ Where the suggestions are ordered first by the number of decimal places in `binn
 |`binned_pixel_size`          | The resulting pixel size after binning                                           |
 |`target_resolution`          | The actual resolution for this pixel size (which may account for oversampling)   |
 |`compatibility_factors`      | A box size must be divisible by this number to be compatible with the suggested binning factor (to result in an even integer box) |
-|`count_compatible_EMAN2boxes`| The number of boxes from the EMAN2 list that are compatible with this binning factor |
-|`compatible_boxes`           | The specific EMAN2 boxes that are compatible                                         |
+|`count_compatible_boxes`     | The number of FFT-friendly boxes that are compatible with this binning factor    |
+|`compatible_boxes`           | The specific FFT-friendly boxes that are compatible                              |
 
 ## Usage
 
@@ -57,7 +57,7 @@ python find_binning_factor.py --pixel_size <PIXEL_SIZE> --target_resolution <TAR
 | Argument       | Description                   |
 | -------------- | ----------------------------- |
 | `--verbose`    | Enable verbose logging.       |
-| `--output-dir` | Specify a directory to enable saving the output. | 
+| `--output-dir` | Specify a directory to enable saving the output. If the directory exist, appends a timestamp. | 
 
 ### Advanced arguments
 
@@ -66,12 +66,12 @@ Feel free to experiment with them using the details below.
 
 | Argument                               | Default | Description                                                                                          |
 | :------------------------------------- | :-----: | :----------------------------------------------------------------------------------------------------|
-| `--sampling_factor`                    |     `3` | Sampling factor used to relate pixel size and resolution. Nyquist sampling: `2`; Oversampling: `>2`. |
-| `--resolution_tolerance`               |   `0.2` | Acceptable tolerance from the target resolution in Å.                                                |
-| `--pixel_max_decimals`                 |     `6` | Maximum number of decimal places allowed for the binned pixel size.                                  |
-| `-lb`, `--compatible-box-min-size`     |    `64` | Minimum FFT-friendly box size considered for compatibility (filters the EMAN2 list).                 |
-| `-ub`, `--compatible-box-max-size`     |  `1024` | Maximum FFT-friendly box size considered for compatibility (filters the EMAN2 list).                 |
-| `-db`, `--compatible-box-divisible-by` |     `2` | Only consider FFT-friendly box sizes divisible by any of the input values. Multiple values can be provided (filters the EMAN2 list). |
+| `--sampling_factor`                    | `3` | Sampling factor used to relate pixel size and resolution. Nyquist sampling: `2`; Oversampling: `>2`. |
+| `--resolution_tolerance`               | `0.2` | Acceptable tolerance from the target resolution in Å.                                                |
+| `--pixel_max_decimals`                 | `6` | Maximum number of decimal places allowed for the binned pixel size.                                  |
+| `-lb`, `--compatible-box-min-size`     | `64` | Minimum FFT-friendly box size considered for compatibility (filters the FFT-friendly box list).                 |
+| `-ub`, `--compatible-box-max-size`     | `512` | Maximum FFT-friendly box size considered for compatibility (filters the FFT-friendly box list).                 |
+| `-db`, `--compatible-box-divisible-by` | `(2, 4, 5, 8, 10)` | Only consider FFT-friendly boxes that are divisible by any of the input values. Multiple values can be provided (filters the FFT-friendly box list). |
 
 ## Technical overview
 ### Search Grid
@@ -104,12 +104,12 @@ The grid generation inherently guarantees that every candidate pixel size has a 
 
 Then, we actively filter out candidate binning factors that:
 - are non-terminating or
-- yield zero compatible boxes from the EMAN2 list
+- yield zero compatible boxes from the FFT-friendly box list
 
 ### Evaluation & Dominance
 Each candidate solution (the pixel size and its binning factor) is evaluated in order of importance by:
 1. The number of decimal places in the pixel size (lower is better).
-2. The number of compatible EMAN2 boxes (higher is better).
+2. The number of compatible FFT-friendly box boxes (higher is better).
 
 A candidate solution is considered dominated if another solution exists that has fewer decimal places and more compatible boxes. Because these dominated solutions are redundant, they are removed from the final output.
 
