@@ -66,10 +66,10 @@ Feel free to experiment with them using the details below.
 
 | Argument                               | Default | Description                                                                                          |
 | :------------------------------------- | :-----: | :----------------------------------------------------------------------------------------------------|
-| `--sampling_factor`                    | `3` | Sampling factor used to relate pixel size and resolution. Nyquist sampling: `2`; Oversampling: `>2`. |
+| `--sampling_ratio`                     | `3`   | The ratio $R=target\_resolution/pixel\_size$. Higher values give more sampling margin but require finer pixels. Nyquist limit: $2$, Oversampling: $>2$. |
 | `--resolution_tolerance`               | `0.2` | Acceptable tolerance from the target resolution in Å.                                                |
-| `--pixel_max_decimals`                 | `6` | Maximum number of decimal places allowed for the binned pixel size.                                  |
-| `-lb`, `--compatible-box-min-size`     | `64` | Minimum FFT-friendly box size considered for compatibility (filters the FFT-friendly box list).                 |
+| `--pixel_max_decimals`                 | `6`   | Maximum number of decimal places allowed for the binned pixel size.                                  |
+| `-lb`, `--compatible-box-min-size`     | `64`  | Minimum FFT-friendly box size considered for compatibility (filters the FFT-friendly box list).                 |
 | `-ub`, `--compatible-box-max-size`     | `512` | Maximum FFT-friendly box size considered for compatibility (filters the FFT-friendly box list).                 |
 | `-db`, `--compatible-box-divisible-by` | `(2, 4, 5, 8, 10)` | Only consider FFT-friendly boxes that are divisible by any of the input values. Multiple values can be provided (filters the FFT-friendly box list). |
 

@@ -152,7 +152,7 @@ def plot_pareto(solutions, all_solutions=False, feasible_solutions=False,
         plt.savefig(filepath, dpi=300)
     return ax
 
-def find_binning_parameters(target_resolution_A, pixel_size_A_per_pixel, sampling_factor, 
+def find_binning_parameters(target_resolution_A, pixel_size_A_per_pixel, sampling_ratio, 
                             evaluation_boxes,
                             evaluation_feasible_primes,
                             grid_step=Fraction(1, 10**6), resolution_tolerance=0.2):
@@ -160,14 +160,14 @@ def find_binning_parameters(target_resolution_A, pixel_size_A_per_pixel, samplin
     evaluation_boxes = np.asarray(evaluation_boxes)
 
     ### search grid ###
-    start_res = Fraction(str(target_resolution_A - resolution_tolerance)) / sampling_factor
-    end_res   = Fraction(str(target_resolution_A + resolution_tolerance)) / sampling_factor
+    start_res = Fraction(str(target_resolution_A - resolution_tolerance)) / sampling_ratio
+    end_res   = Fraction(str(target_resolution_A + resolution_tolerance)) / sampling_ratio
     start_idx = math.ceil(start_res / grid_step)
     end_idx   = math.floor(end_res /  grid_step)
 
     ### candidate solutions ###
     candidate_pixel_sizes = np.array([Fraction(str(i * grid_step)) for i in range(start_idx, end_idx + 1)])
-    candidate_resolutions = np.array([Fraction(str(p*Fraction(sampling_factor))) for p in candidate_pixel_sizes])
+    candidate_resolutions = np.array([Fraction(str(p*Fraction(sampling_ratio))) for p in candidate_pixel_sizes])
     candidate_binnings    = np.array([Fraction(str(p/pixel_size_A_per_pixel)) for p in candidate_pixel_sizes])
     
     ### evaluation ###
@@ -233,11 +233,11 @@ if __name__ == "__main__":
     parser.add_argument("-p", "--pixel_size"       , type=float, required=True, help="Current Pixel Size")
     parser.add_argument("-t", "--target_resolution", type=float, required=True, help="Target Resolution")
     # optionals
-    parser.add_argument("--sampling_factor",                type=float,default=3,    help="Relate pixel size and resolution. Nyquist sampling: 2; Oversampling: >2")
-    parser.add_argument("--resolution_tolerance",           type=float,default=0.2,  help="Acceptable tolerance from the target resolution in Å.")
-    parser.add_argument("--pixel_max_decimals",             type=int,  default=6,    help="Maximum number of decimal places allowed for the binned pixel size.")
-    parser.add_argument("-lb", "--compatible-box-min-size", type=int,  default=64,   help="Minimum FFT-friendly box size considered for compatibility (default: 64).")
-    parser.add_argument("-ub", "--compatible-box-max-size", type=int,  default=1024, help="Maximum FFT-friendly box size considered for compatibility (default: 1024).")
+    parser.add_argument("--sampling_ratio",                 type=float, default=3,    help="The ratio of target resolution to pixel size. Higher values give more sampling margin but require finer pixels. Nyquist limit: 2, Oversampling: >2.")
+    parser.add_argument("--resolution_tolerance",           type=float, default=0.2,  help="Acceptable tolerance from the target resolution in Å.")
+    parser.add_argument("--pixel_max_decimals",             type=int,   default=6,    help="Maximum number of decimal places allowed for the binned pixel size.")
+    parser.add_argument("-lb", "--compatible-box-min-size", type=int,   default=64,   help="Minimum FFT-friendly box size considered for compatibility (default: 64).")
+    parser.add_argument("-ub", "--compatible-box-max-size", type=int,   default=1024, help="Maximum FFT-friendly box size considered for compatibility (default: 1024).")
     parser.add_argument("-db", "--compatible-box-divisible-by", type=int, nargs="+", default=(2, 4, 5, 8, 10), help="Only consider FFT-friendly box sizes divisible by the input values (default: 2, 4, 5, 8, 10).")
 
     parser = utils.cli.add_common_arguments(parser) # adds --verbose, --json, --output-dir --debug
@@ -267,7 +267,7 @@ if __name__ == "__main__":
     # convert everything to fractions to minimize float related problems
     history = find_binning_parameters(target_resolution_A        = Fraction(str(args.target_resolution)), 
                                       pixel_size_A_per_pixel     = Fraction(str(args.pixel_size)), 
-                                      sampling_factor            = Fraction(str(args.sampling_factor)),
+                                      sampling_ratio            = Fraction(str(args.sampling_ratio)),
                                       evaluation_boxes           = fft_sizes_filtered,
                                       evaluation_feasible_primes = (2, 3, 5, 7, 11, 13),
                                       grid_step                  = Fraction(1, 10**args.pixel_max_decimals),
