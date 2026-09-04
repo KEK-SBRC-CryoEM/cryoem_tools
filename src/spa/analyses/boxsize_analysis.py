@@ -427,7 +427,7 @@ def run_ctf_vs_boxsize(voltage, cs, pixelsize_list, defocus_list, boxsize_list, 
                     lambda_A   = lambda_,
                     defocus_A  = z,
                     cs_A       = c,
-                    boxsize    = boxsize,
+                    box_size   = boxsize,
                     pixel_size_A_per_pix = pixel_size,
                 )
 
