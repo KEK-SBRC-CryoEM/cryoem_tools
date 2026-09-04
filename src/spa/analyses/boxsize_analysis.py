@@ -424,11 +424,11 @@ def run_ctf_vs_boxsize(voltage, cs, pixelsize_list, defocus_list, boxsize_list, 
             for boxsize in boxsize_list:
                 # CTF
                 freq, ctf1d = phaseshift_ctf(
-                    lambda_A    = lambda_,
-                    pixel_size = pixel_size,
-                    defocus    = z,
-                    cs         = c,
-                    boxsize    = boxsize
+                    lambda_A   = lambda_,
+                    defocus_A  = z,
+                    cs_A       = c,
+                    boxsize    = boxsize,
+                    pixel_size_A_per_pix = pixel_size,
                 )
 
                 plot_ctf_1d(freq, ctf1d, 
