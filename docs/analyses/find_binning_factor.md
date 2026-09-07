@@ -106,6 +106,8 @@ Then, we actively filter out candidate binning factors that:
 - are non-terminating or
 - yield zero compatible boxes from the FFT-friendly box list
 
+For compatibility, a binning factor is expressed as an irreducible fraction $b = \frac{c}{d}$. where $c$ is the numerator and $d$ the denominator. A box of size $N$ is compatible with $b$ if $N \text{ modulo } d = 0$, making the product $Nb$ integer. 
+
 ### Evaluation & Dominance
 Each candidate solution (the pixel size and its binning factor) is evaluated in order of importance by:
 1. The number of decimal places in the pixel size (lower is better).
@@ -132,3 +134,4 @@ The x-axis shows the actual target resolution (Å) obtained for each candidate, 
 - **Red:** Optimal solutions, differ in box compatibility factor. 
 
 The binning factor is shown above each solution as an irreducible fraction; the denominator indicates the box compatibility.
+
