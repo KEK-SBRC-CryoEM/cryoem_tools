@@ -25,7 +25,6 @@ from pathlib import Path
 # python main.py  config/environment_settings_prews.yaml  config/analyses_settings.yaml -m "/home/tmoriya/shared_for_all/data/jair/EMPIAR10673_GPCR/PostProcess/job115/postprocess.mrc" -k "/home/tmoriya/shared_for_all/data/jair/autoparam/CS-Schemes/configs/common/config_em_settings_empiar10673_gpcr.yml" -n  "/home/tmoriya/shared_for_all/data/jair/autoparam/CS-Schemes/configs/common/config_sample_settings_empiar10673_gpcr.yml" --verbose --debug
 ###
 
-from pathlib import Path
 __myname__ = Path(__file__).stem
 logger = logging.getLogger(__myname__)
 
@@ -340,6 +339,7 @@ if __name__ == "__main__":
     # Input files handling
     settings = load_settings(args.config_filepath_list)
 
+    logger.info(__myname__.upper())
     # CLI handling
     if "input" not in settings.keys():
         settings["input"] = {"user": {}}
