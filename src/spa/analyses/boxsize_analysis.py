@@ -506,7 +506,7 @@ if __name__ == "__main__":
     else:
         output_folder = args.output_dir or f"boxsize_{args.mode.lower()}" 
     # directory creation
-    basedir = utils.paths.mkdir_timestamp(output_folder) # skip if args.output_dir is None
+    basedir = utils.paths.mkdir_output(args.output_dir, mode="timestamp") # skip if args.output_dir is None
 
     ### Logging ###
     utils.log.configure_logging(verbose=args.verbose, output_directory=basedir, capture_warnings=True)

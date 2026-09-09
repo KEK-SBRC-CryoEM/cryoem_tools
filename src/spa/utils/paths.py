@@ -1,36 +1,49 @@
 from pathlib import Path
 from spa.utils.time import get_timestamp
+from functools import partial
 
-def mkdir_numbered(base_path):
+def get_numbered_suffix(path:str) -> str|None:
     """
-    Creates a numbered directory (e.g., '000') under base_path.
+    Return a numbered suffix for directory creation (e.g., '000').
+    Returns None if the limit (999) is reached.
     """
-    if not base_path:
-        return None
-
-    base_dir = Path(base_path)
-    
     for n in range(1000):
-        final_dir = base_dir / f"{n:03d}"
-        
-        try:
-            final_dir.mkdir(parents=True, exist_ok=False)
-            return str(final_dir)
-        except FileExistsError:
-            continue
+        suffix = f"{n:03d}"
+
+        if not Path(path+suffix).exists():
+            return suffix
 
     # if somehow we hit folder 999+1...
-    raise RuntimeError(f"Limit reached: please consider creating another base directory.")
+    return None
 
-def mkdir_timestamp(base_path):
+def mkdir_output(path:str, mode:str="timestamp", sep:str="_") -> str|None:
     """
-    Create a timestamped output directory under base_path.
+    Create the output directory and return f"{path}{sep}{suffix}":str.
+    If 'path' already exists, it appends a string determined by 'mode'.
+    Available modes:
+        - numbered : from 000 to 999 
+        - timestamp: %Y-%m-%d_%H-%M-%S
     """
-    if not base_path:
+    get_suffix = {
+        "numbered" : get_numbered_suffix,
+        "timestamp": lambda _: get_timestamp(file_format=True),
+    }
+
+    if not path:
         return None
     
-    final_dir = Path(base_path) / get_timestamp(True)
-    Path(final_dir).mkdir(parents=True, exist_ok=True)
-
-    return str(final_dir)
-
+    final_path = Path(path)
+    if final_path.exists():
+        if mode not in get_suffix:
+            raise ValueError(f"Invalid mode '{mode}'. Available modes: {list(get_suffix.keys())}")
+        
+        final_path = Path(str(final_path)+sep)
+        suffix = get_suffix[mode](str(final_path))
+        
+        if suffix:
+            final_path = final_path.parent / f"{final_path.name}{suffix}"
+        else:
+            raise RuntimeError(f"Failed to generate a valid '{mode}' suffix for {final_path}")
+        
+    final_path.mkdir(parents=True, exist_ok=False)
+    return str(final_path)

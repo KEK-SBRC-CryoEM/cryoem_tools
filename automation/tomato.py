@@ -331,7 +331,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # Directory creation
-    basedir = utils.paths.mkdir_timestamp(args.output_dir or ".") # skip if args.output_dir is None
+    basedir = utils.paths.mkdir_output(args.output_dir or ".", mode="timestamp") # skip if args.output_dir is None
 
     # Logging
     utils.log.configure_logging(verbose=args.verbose, output_directory=basedir, capture_warnings=True)
