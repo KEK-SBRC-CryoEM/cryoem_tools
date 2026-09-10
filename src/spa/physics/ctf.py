@@ -204,6 +204,7 @@ def phaseshift_ctf2d(lambda_, pixel_size, defocus, cs, boxsize):
 
 if __name__ == "__main__": #*
 	# python ctf.py -b 400 -p 1.2 -v 300 -d -0.8 -c 2.7 --verbose
+    ########## CLI setup ##########
     parser = argparse.ArgumentParser(description="Estimate the CTF aliasing limit based on microscope parameters.")	
     parser.add_argument("-b", "--boxsize",    type=int,   required=True, help="Boxsize in pixels (size of the extracted image square).")
     parser.add_argument("-p", "--pixel_size", type=float, required=True, help="Pixel size in [Å].")
@@ -211,18 +212,9 @@ if __name__ == "__main__": #*
     parser.add_argument("-d", "--defocus",    type=float, required=True, help="Defocus value in micrometers [µm].")
     parser.add_argument("-c", "--cs",         type=float, required=True, help="Spherical aberration constant (Cs) in millimeters [mm].")
     parser.add_argument("-limres", "--limit_resolution",  default=15, type=float, help="(Optional) Estimate CTF only up to this limiting resolution")
-    parser = utils.cli.add_common_arguments(parser) # adds --verbose, --json, --output-dir --debug
-    args = parser.parse_args()
 
-    # directory creation
-    basedir = utils.paths.mkdir_output(args.output_dir, mode="timestamp") # skip if args.output_dir is None
-
-    # logging
-    utils.log.configure_logging(verbose=args.verbose, output_directory=basedir, capture_warnings=True)
-
-    # print log header
-    if args.verbose:
-        utils.cli.log_cli_header(logger=logger, script_name=__myname__, args=args)
+    args = utils.cli.init_cli(__myname__, parser) # check the docstring for complete behavior; args.output_path is the resolved run directory
+    ##### / #####
 
     # computation
     result = ctf_limit(args.boxsize, args.pixel_size, args.voltage, args.defocus, args.cs, args.limit_resolution)
@@ -235,7 +227,7 @@ if __name__ == "__main__": #*
     # print and save output
     output = utils.output.print_and_save(result_dict, 
                                          print_as="json" if args.json else "yaml",
-                                         filepath=os.path.join(basedir, __myname__) if basedir else None)
+                                         filepath=os.path.join(args.output_path, __myname__) if args.output_path else None)
     logger.info(f"Result:\n{output['yaml']}")
     logger.info(f"Exiting...")
     logger.info("-"*40)

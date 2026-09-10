@@ -13,6 +13,7 @@ __myname__ = Path(__file__).stem
 logger = logging.getLogger(__myname__)
 
 if __name__ == "__main__":
+    ########## CLI setup ##########
     parser = argparse.ArgumentParser(
         description=(
             "Compute the Extraction and Rescaled box sizes required for the Relion Extraction job."
@@ -20,18 +21,9 @@ if __name__ == "__main__":
         formatter_class=argparse.RawTextHelpFormatter)
     parser.add_argument("-f", "--binning_factor"     , type=float, required=True, help="Binning Factor: reference_box / binned_box")
     parser.add_argument("-t", "--target_rescaled_box", type=float, required=True, help="Target rescaled box: from the ctf limit")
-    parser = utils.cli.add_common_arguments(parser) # adds --verbose, --json, --output-dir --debug
-    args = parser.parse_args()
 
-    # directory creation
-    basedir = utils.paths.mkdir_output(args.output_dir, mode="timestamp") # skip if args.output_dir is None
-
-    # logging
-    utils.log.configure_logging(verbose=args.verbose, output_directory=basedir, capture_warnings=True)
-
-    # print log header
-    if args.verbose:
-        utils.cli.log_cli_header(logger=logger, script_name=__myname__, args=args)
+    args = utils.cli.init_cli(__myname__, parser) # check the docstring for complete behavior; args.output_path is the resolved run directory
+    ##### / #####
 
     # computation
     logger.info("Computing extraction boxes...")
@@ -48,7 +40,7 @@ if __name__ == "__main__":
     # print and save output
     output = utils.output.print_and_save(result, 
                                          print_as="json" if args.json else "yaml",
-                                         filepath=os.path.join(basedir, __myname__) if basedir else None)
+                                         filepath=os.path.join(args.output_path, __myname__) if args.output_path else None)
     logger.info(f"Result:\n{output['yaml']}")
     logger.info(f"Exiting...")
     logger.info("-"*40)

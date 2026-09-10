@@ -40,6 +40,7 @@ def estimate_particle_size(volume, threshold, kernel_size=3, kernel_spherical=Tr
 if __name__ == "__main__":
     # python src/spa/analyses/size_estimation.py -v test_/input/volume/emd_0407_mask_aligned.mrc   -s --output-dir test_/output/
     # python src/spa/analyses/size_estimation.py -v test_/input/volume/emd_0407_volume_aligned.map -t 0.008 -s --output-dir test_/output/
+    ########## CLI setup ##########
     parser = argparse.ArgumentParser(
         description=(
             "Estimate the size of the positive density of a .mrc file, "
@@ -53,18 +54,9 @@ if __name__ == "__main__":
     parser.add_argument("-v", "--volume",    type=str, required=True, help="Volume or Mask filepath (.mrc)")
     parser.add_argument("-t", "--threshold", type=float, default=0,   help="Threshold value that best filters out noise (default: 0). Not required if --volume is a mask.")
     parser.add_argument("-s", "--save",      action="store_true",     help="Save enclosing sphere as a mask file (.mrc)")
-    parser = utils.cli.add_common_arguments(parser) # adds --verbose, --json, --output-dir --debug
-    args = parser.parse_args()
 
-    # directory creation
-    basedir = utils.paths.mkdir_output(args.output_dir, mode="timestamp") # skip if args.output_dir is None
-
-    # logging
-    utils.log.configure_logging(verbose=args.verbose, output_directory=basedir, capture_warnings=True)
-
-    # print log header
-    if args.verbose:
-        utils.cli.log_cli_header(logger=logger, script_name=__myname__, args=args)
+    args = utils.cli.init_cli(__myname__, parser) # check the docstring for complete behavior; args.output_path is the resolved run directory
+    ##### / #####
 
     # computation
     logger.info(f"Loading file: {args.volume}")
@@ -79,7 +71,7 @@ if __name__ == "__main__":
     # save mask
     if args.save:
         fname = f"mask_r{int(result['radius'])}.mrc"
-        fpath = os.path.join(basedir or ".", fname)
+        fpath = os.path.join(args.output_path or ".", fname)
         logger.info(f"Saving mask to {fpath}")
         mask = volops.create_spherical_mask(
                 shape  = volume["data"].shape,
@@ -92,7 +84,7 @@ if __name__ == "__main__":
     # print and save output
     output = utils.output.print_and_save(result, 
                                          print_as="json" if args.json else "yaml",
-                                         filepath=os.path.join(basedir, __myname__) if basedir else None)
+                                         filepath=os.path.join(args.output_path, __myname__) if args.output_path else None)
     logger.info(f"Result:\n{output['yaml']}")
     logger.info(f"Exiting...")
     logger.info("-"*40)

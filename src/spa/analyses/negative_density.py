@@ -431,6 +431,7 @@ def figures_pipeline(volume, mask,
 
 if __name__ == "__main__":
     # python negative_estimation.py -
+    ########## CLI setup ##########
     parser = argparse.ArgumentParser(
         description=(
             "Estimates the size of the negative density of a .mrc file, "
@@ -445,18 +446,9 @@ if __name__ == "__main__":
     parser.add_argument("-m", "--mask", type=str, required=True, help="Mask file (.mrc)")
     parser.add_argument("-t", "--threshold", type=float, default=0, help="Threshold value that best filters out noise (default: 0)")
     parser.add_argument("-s", "--save_files", action="store_true", help="Save files related to the analysis:\n(1) Save enclosing sphere as a map file (.mrc)\n(2) Save plots related to the analysis")
-    parser = utils.cli.add_common_arguments(parser) # adds --verbose, --json, --output-dir --debug
-    args = parser.parse_args()
 
-    # directory creation
-    basedir = utils.paths.mkdir_output(args.output_dir, mode="timestamp") # skip if args.output_dir is None
-
-    # logging
-    utils.log.configure_logging(verbose=args.verbose, output_directory=basedir, capture_warnings=True)
-
-    # print log header
-    if args.verbose:
-        utils.cli.log_cli_header(logger=logger, script_name=__myname__, args=args)
+    args = utils.cli.init_cli(__myname__, parser) # check the docstring for complete behavior; args.output_path is the resolved run directory
+    ##### / #####
 
     # preprocessing
     logger.info(f"Loading volume: {args.volume} with threshold {args.threshold}")
@@ -477,7 +469,7 @@ if __name__ == "__main__":
         logger.info(f"Generating figures...")
         figures_pipeline(volume["data"], mask["data"],
                      **result,
-                     output_folder=basedir
+                     output_folder=args.output_path
         )
 
     # print and save output
@@ -485,7 +477,7 @@ if __name__ == "__main__":
     # print and save output
     output = utils.output.print_and_save(result_, 
                                          print_as="json" if args.json else "yaml",
-                                         filepath=os.path.join(basedir, __myname__) if basedir else None)
+                                         filepath=os.path.join(args.output_path, __myname__) if args.output_path else None)
     logger.info(f"Result:\n{output['yaml']}")
     logger.info(f"Exiting...")
     logger.info("-"*40)

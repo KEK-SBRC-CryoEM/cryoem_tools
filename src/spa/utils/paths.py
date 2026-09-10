@@ -21,11 +21,11 @@ def mkdir_output(path:str, mode:str="timestamp", sep:str="_") -> str|None:
     Create the output directory and return f"{path}{sep}{suffix}":str.
     If 'path' already exists, it appends a string determined by 'mode'.
     Available modes:
-        - numbered : from 000 to 999 
+        - number : from 000 to 999 
         - timestamp: %Y-%m-%d_%H-%M-%S
     """
     get_suffix = {
-        "numbered" : get_numbered_suffix,
+        "number" : get_numbered_suffix,
         "timestamp": lambda _: get_timestamp(file_format=True),
     }
 

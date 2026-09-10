@@ -228,6 +228,7 @@ def find_binning_parameters(target_resolution_A, pixel_size_A_per_pixel, samplin
     return history
 
 if __name__ == "__main__":
+    ########## CLI setup ##########
     parser = argparse.ArgumentParser()
     # required
     parser.add_argument("-p", "--pixel_size"       , type=float, required=True, help="Current Pixel Size")
@@ -239,19 +240,9 @@ if __name__ == "__main__":
     parser.add_argument("-lb", "--compatible-box-min-size", type=int,   default=64,   help="Minimum FFT-friendly box size considered for compatibility (default: 64).")
     parser.add_argument("-ub", "--compatible-box-max-size", type=int,   default=1024, help="Maximum FFT-friendly box size considered for compatibility (default: 1024).")
     parser.add_argument("-db", "--compatible-box-divisible-by", type=int, nargs="+", default=(2, 4, 5, 8, 10), help="Only consider FFT-friendly box sizes divisible by the input values (default: 2, 4, 5, 8, 10).")
-
-    parser = utils.cli.add_common_arguments(parser) # adds --verbose, --json, --output-dir --debug
-    args = parser.parse_args()
-
-    # directory creation
-    basedir = utils.paths.mkdir_output(args.output_dir, mode="timestamp") # skip if args.output_dir is None
-
-    # logging
-    utils.log.configure_logging(verbose=args.verbose, output_directory=basedir, capture_warnings=True)
-
-    # print log header
-    if args.verbose:
-        utils.cli.log_cli_header(logger=logger, script_name=__myname__, args=args)
+    
+    args = utils.cli.init_cli(__myname__, parser) # check the docstring for complete behavior; args.output_path is the resolved run directory
+    ##### / #####
 
     #### step 0: filter fft sizes ####
     fft_sizes_filtered = box.get_fft_friendly_sizes(min_size=args.compatible_box_min_size, 
@@ -283,8 +274,8 @@ if __name__ == "__main__":
     logger.info(f"+ Feasible solutions: {history['is_feasible'].sum()}")
     
     # (debug only) save history
-    if basedir and args.debug:
-        filepath = os.path.join(basedir, f"history_{args.pixel_size}ÅperPixel_{args.target_resolution}Å.csv")
+    if args.output_path and args.debug:
+        filepath = os.path.join(args.output_path, f"history_{args.pixel_size}ÅperPixel_{args.target_resolution}Å.csv")
         history.to_csv(filepath, index=False)
         logger.info(f"+ Search evaluation saved to {filepath}")
 
@@ -305,9 +296,9 @@ if __name__ == "__main__":
     history.loc[history.index[_mask][_pareto_idx_group], "pareto"] = 1
     logger.info(f"+ Non-dominated solutions: {sum(history['pareto']>0)}")
     
-    if basedir and args.debug: 
+    if args.output_path and args.debug: 
     # (debug only) save updated history with pareto information
-        filepath = os.path.join(basedir, f"history_{args.pixel_size}ÅperPixel_{args.target_resolution}Å.csv")
+        filepath = os.path.join(args.output_path, f"history_{args.pixel_size}ÅperPixel_{args.target_resolution}Å.csv")
         history.to_csv(filepath, index=False)
         logger.info(f"+ Search evaluation updated at {filepath}")
 
@@ -324,13 +315,13 @@ if __name__ == "__main__":
     result = {f"rank{i+1}":entry for i, entry in enumerate(pareto_csv.head(3).to_dict(orient="records"))} # "recors"->list of dicts, where each pd row is a dict
     output = utils.output.print_and_save(result,
                                          print_as="json" if args.json else ("yaml" if not args.verbose else None),
-                                         filepath=os.path.join(basedir, __myname__) if basedir else None)
+                                         filepath=os.path.join(args.output_path, __myname__) if args.output_path else None)
     logger.info(f"Top #{len(pareto_csv.head(3))} Results:\n\n{output['yaml']}")
 
     #### step 3: save pareto.csv and pareto.png ####
-    if basedir:
+    if args.output_path:
         #### csv ####
-        filepath = os.path.join(basedir, f"optimal_{args.pixel_size}ÅperPixel_{args.target_resolution}Å.csv")
+        filepath = os.path.join(args.output_path, f"optimal_{args.pixel_size}ÅperPixel_{args.target_resolution}Å.csv")
         pareto_csv.to_csv(filepath, index=False)
         logger.info(f"+ Pareto solutions saved to {filepath}")
 
@@ -343,7 +334,7 @@ if __name__ == "__main__":
         _toplot["obj1"] = args.target_resolution + _sign*_toplot["obj1"] # lets plot the actual resolution
         
         # plot
-        filepath = os.path.join(basedir, f"pareto_{args.pixel_size}ÅperPixel_{args.target_resolution}Å.png") if basedir else None
+        filepath = os.path.join(args.output_path, f"pareto_{args.pixel_size}ÅperPixel_{args.target_resolution}Å.png") if args.output_path else None
         plot_pareto(_toplot, all_solutions=True, feasible_solutions=True, 
                 y_label                  = "Number of decimals in the Binned Pixel Size",
                 x_label                  = "Actual Target Resolution",

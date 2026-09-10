@@ -50,6 +50,7 @@ def do_alignment(volume, mask, threshold):
 if __name__ == "__main__":
     # python src/spa/analyses/volume_alignment.py -v volume.mrc -m mask.mrc -s
     # python src/spa/analyses/volume_alignment.py -v volume.mrc -t 0.01 -s
+    ########## CLI setup ##########
     parser = argparse.ArgumentParser(
         description=(
             "Align a 3D volume/mask to the orthogonal axes. "
@@ -67,18 +68,9 @@ if __name__ == "__main__":
     parser.add_argument("-m", "--mask",      type=str,                help="Mask filepath (.mrc)")
     parser.add_argument("-t", "--threshold", type=float, default=0,   help="Threshold for binary segmentation (default: 0).")
     parser.add_argument("-s", "--save",      action="store_true",     help="Save orthogonal slices of the aligned volume. (.png)")
-    parser = utils.cli.add_common_arguments(parser) # adds --verbose, --json, --output-dir --debug
-    args = parser.parse_args()
-
-    # directory creation
-    basedir = utils.paths.mkdir_output(args.output_dir, mode="timestamp") # skip if args.output_dir is None
-
-    # logging
-    utils.log.configure_logging(verbose=args.verbose, output_directory=basedir, capture_warnings=True)
-
-    # print log header
-    if args.verbose:
-        utils.cli.log_cli_header(logger=logger, script_name=__myname__, args=args)
+    
+    args = utils.cli.init_cli(__myname__, parser) # check the docstring for complete behavior; args.output_path is the resolved run directory
+    ##### / #####
 
     # computation
     logger.info("Loading volume...")
@@ -97,8 +89,8 @@ if __name__ == "__main__":
     alignment_data["box_size"] = alignment_data["volume"].shape[0]
 
     # saving aligned volume
-    avolume_path = os.path.join(basedir or ".", f"aligned_{Path(args.volume).name}")
-    amask_path   = os.path.join(basedir or ".", f"aligned_{Path(args.mask).name}") if args.mask else None
+    avolume_path = os.path.join(args.output_path or ".", f"aligned_{Path(args.volume).name}")
+    amask_path   = os.path.join(args.output_path or ".", f"aligned_{Path(args.mask).name}") if args.mask else None
 
     utils.mrc.save(volume     = alignment_data["volume"],
                    voxel_size = voxel_size,
@@ -111,7 +103,7 @@ if __name__ == "__main__":
     # figures
     if args.save:
         logger.info("Generating figures...")
-        outp = os.path.join(basedir or ".", "orthogonal_view.png")
+        outp = os.path.join(args.output_path or ".", "orthogonal_view.png")
         generate_figures(segmented      = alignment_data["mask"],
                          initial_sphere = alignment_data["initial_enclosing_sphere"], 
                          aligned_sphere = alignment_data["aligned_enclosing_sphere"], 
@@ -124,7 +116,7 @@ if __name__ == "__main__":
     alignment_data["mask"]   = amask_path
     output = utils.output.print_and_save(alignment_data, 
                                         print_as="json" if args.json else "yaml",
-                                        filepath=os.path.join(basedir, __myname__) if basedir else None)
+                                        filepath=os.path.join(args.output_path, __myname__) if args.output_path else None)
     
     logger.info(f"Result:\n{output['yaml']}")
     logger.info(f"Exiting...")
