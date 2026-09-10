@@ -57,7 +57,7 @@ python find_binning_factor.py --pixel_size <PIXEL_SIZE> --target_resolution <TAR
 | Argument       | Description                   |
 | -------------- | ----------------------------- |
 | `--verbose`    | Enable verbose logging.       |
-| `--output-dir` | Specify a directory to enable saving the output. If the directory exist, appends a timestamp. | 
+| `--output-dir` | Specify a directory to enable saving the output. If not provided, results print to stdout and logs to stderr only. If provided, a subdirectory named `find_binning_factor` will be created under this specified directory. If it already exists, a unique suffix is appended. | 
 
 ### Advanced arguments
 

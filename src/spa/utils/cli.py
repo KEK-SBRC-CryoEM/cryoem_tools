@@ -1,5 +1,6 @@
 import argparse
 import logging
+import os
 
 from spa import utils
 from collections.abc import Mapping
@@ -19,7 +20,7 @@ def add_common_arguments(parser: argparse.ArgumentParser) -> argparse.ArgumentPa
     >>> args = parser.parse_args()
     """
     parser.add_argument("--json", action="store_true", help="Output results as JSON. Useful for the automation pipeline. If not provided, output will be shown in YAML, a human-friendly format.")
-    parser.add_argument("-o", "--output-dir", type=str, help="Base directory for outputs and logs. Create a named subdirectory inside this path. If that subdirectory already exists, a suffix is appended (determined by --output-dir-suffix). If not provided, results print to stdout and logs to stderr only.")
+    parser.add_argument("-o", "--output-dir", type=str, help="Specify a directory to enable saving the output. If not provided, results print to stdout and logs to stderr only. If provided, a named subdirectory will be created under this specified directory. If it already exists, a unique suffix is appended (determined by --output-dir-suffix).")
     parser.add_argument("--output-dir-suffix", choices=["timestamp", "number"], default="timestamp", type=str, help="Determines the suffix appended to the output directory only if the output directory already exists. Choices: 'timestamp' (e.g., dir_2026-09-09_13-14-17) or 'number' (e.g., dir_001). Default: timestamp")    
     parser.add_argument("--verbose", action="store_true", help="Enable more detailed logging.")
     parser.add_argument("--debug",   action="store_true", help="May generate extra logs and data.")
@@ -71,7 +72,7 @@ def init_cli(name:str, parser:argparse.ArgumentParser) -> argparse.Namespace:
     args = parser.parse_args()
 
     # directory creation (extends args)
-    args.output_path = utils.paths.mkdir_output(args.output_dir, mode=args.output_dir_suffix) # skip if args.output_dir is None
+    args.output_path = utils.paths.mkdir_output(os.path.join(args.output_dir, name), mode=args.output_dir_suffix) # skip if args.output_dir is None
 
     # logging
     utils.log.configure_logging(verbose=args.verbose, output_directory=args.output_path, capture_warnings=True)
