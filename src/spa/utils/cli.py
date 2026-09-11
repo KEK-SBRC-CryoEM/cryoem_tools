@@ -52,12 +52,14 @@ def log_cli_header(logger        : logging.Logger,
     logger.info(divider * divider_length)
 
     # scripts argument
-    logger.info("Inputs:")
     others = {k:v for k,v in args.items() if k not in ["Debug", "Verbose", "Output Format", "Output Dir", "Json", "Output Dir Suffix", "Output Path"]}
-    width  = max([len(k) for k in others.keys()])
-    for key, value in others.items():
-        logger.info(f"+ {key:<{width}}: {value}")
-    logger.info(divider * divider_length)
+    if others:
+        logger.info("Inputs:")
+        width  = max([len(k) for k in others.keys()])
+        
+        for key, value in others.items():
+            logger.info(f"+ {key:<{width}}: {value}")
+        logger.info(divider * divider_length)
     
 def init_cli(name:str, parser:argparse.ArgumentParser) -> argparse.Namespace:
     """
