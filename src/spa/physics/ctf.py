@@ -74,9 +74,9 @@ def ctf_period(frequency, lambda_A, defocus_A, cs_A):
     f2 = frequency**2
 
     # solve a 4th order polynomial to compute the local CTF period
-    roots = np.roots([B, 4*B*frequency, 6*B*f2 - A, 4*B*f2*frequency - 2*A*frequency, -1.0])
-
-    return np.min(np.abs(roots))
+    roots      = np.roots([B, 4*B*frequency, 6*B*f2 - A, 4*B*f2*frequency - 2*A*frequency, -1.0])
+    real_roots = roots[np.isclose(roots.imag, 0)] # filter out complex roots 
+    return np.min(np.abs(real_roots))
 
 def ctf_limit(boxsize, pixel_size, voltage, defocus, cs, limit_resolution=15): #*
     """
