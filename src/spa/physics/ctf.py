@@ -15,7 +15,7 @@ from spa import utils #*
 def ctf_delocalization_distance_A(particle_diameter_A, lambda_A, resolution_A, defocus_A):
     """
     Calculate the physical distance required to capture "Fresnel fringes"
-        around a particle in real space caused by CTF-induced delocalization.
+        around a particle in real space caused by defocus induced delocalization.
 
     Parameters:
         particle_diameter_A (float): Particle diameter in Ångströms [Å].
@@ -45,40 +45,38 @@ def ctf_delocalization_distance_A(particle_diameter_A, lambda_A, resolution_A, d
     """
     return particle_diameter_A + 2*defocus_A*(lambda_A/resolution_A) # [Å]
 
-
-def ctf_period(frequency, lambda_A, defocus_A, cs_A): #*
+def ctf_period(frequency, lambda_A, defocus_A, cs_A):
     r"""
     Calculate the local oscillation period of the Contrast Transfer Function (CTF) at a given spatial frequency.
     
-    This function solves for the CTF oscillation period using a fourth-order polynomial derived from the 
-        phase condition: $\gamma(f + T) - \gamma(f) = 1 $ where 
-        $\gamma(f) = 2\pi \left( defocus \lambda frequency^2 - \frac{cs \lambda^3 frequency^4}{2} \right)$.
-    
-    The result represents the distance between two consecutive zero-crossings of the CTF at
-        the specified spatial frequency, which can be used to assess aliasing risk in Fourier space.
+    This function solves for the CTF oscillation period T using a fourth-order polynomial obtained from the 
+        phase condition: $\gamma(f + T) - \gamma(f) = - 2\pi $ where 
+        $\gamma(f) = 2\pi \left(\frac{defocus \lambda frequency^2}{2} - \frac{cs \lambda^3 frequency^4}{4} \right)$.
 
+    The result represents the frequency interval between two consecutive peaks of the CTF from
+        the specified spatial frequency moving towards lower frequency, which can be used to assess aliasing in Fourier space.
+        
     Parameters:
-        defocus_A (float) : defocus value in [Å].
+        defocus_A (float) : defocus value in (positive for underfocus) [Å].
         cs_A      (float) : spherical aberration constant in [Å].
-        lambda_A   (float) : relativistic electron wavelength in [Å].
+        lambda_A   (float): relativistic electron wavelength in [Å].
         frequency (float) : spatial frequency in [Å⁻¹] at which to compute the CTF oscillation period.
 
     Returns:
-        float : The smallest CTF oscillation period [Å⁻¹].
+        float : Frequency Spacing T [Å⁻¹].
 
 	Notes:
-		if there is need to optimize this function  try
-			1) precompute A and B, or
-			2) solve for T: 2*z*lambda*f^2 - c*lambda^3*f^4 = 2*z*lambda*(f+T)^2 - c*(lambda^3)*(f+T)^4 +1
+        This is a reimplementation of the `ctfperiod` function defined in `morphology.py` from the `EMAN2/SPARX` package.
+        morphology.py: https://github.com/cryoem/eman2/blob/master/sparx/libpy/morphology.py (Original Author: Pawel A.Penczek)
     """
     A  = 0.5 * defocus_A * lambda_A
     B  = 0.25 * cs_A * lambda_A**3
     f2 = frequency**2
 
     # solve a 4th order polynomial to compute the local CTF period
-    rot = np.roots([B, 4*B*frequency, 6*B*f2 - A, 4*B*f2*frequency - 2*A*frequency, -1.0])
+    roots = np.roots([B, 4*B*frequency, 6*B*f2 - A, 4*B*f2*frequency - 2*A*frequency, -1.0])
 
-    return min(abs(rot))
+    return np.min(np.abs(roots))
 
 def ctf_limit(boxsize, pixel_size, voltage, defocus, cs, limit_resolution=15): #*
     """
