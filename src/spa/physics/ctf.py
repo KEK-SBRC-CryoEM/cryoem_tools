@@ -129,7 +129,7 @@ def ctf_limit(box_size:int, pixel_size_A:float, voltage_kV:float, defocus_A:floa
 
     # 6. Find the frequency where the CTF oscillation period exceeds the threshold frequency
     logger.info("Finding CTF oscillation period that exceed the threshold frequency...")
-    for bin_i in range(1, n_frequency_bins):  # from low frequencies to Nyquist
+    for bin_i in range(2, n_frequency_bins):  # from low frequencies to Nyquist
         # 6a. Map Fourier‐bin index to spatial frequency (bin_i frequency)
         spatial_frequency = (bin_i /(n_frequency_bins-1)) * nyquist_frequency # [Å⁻¹]
 
