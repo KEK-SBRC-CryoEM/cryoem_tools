@@ -1,16 +1,15 @@
 import os
+import logging 
+import argparse
+
 import numpy as np
 from functools import partial
+from pathlib import Path
+__myname__ = Path(__file__).stem 
+logger = logging.getLogger(__myname__) 
 
+from spa import utils
 from spa import physics
-
-import argparse #*
-from pathlib import Path #*
-import logging #*
-__myname__ = Path(__file__).stem #*
-logger = logging.getLogger(__myname__) #*
-
-from spa import utils #*
 
 def ctf_delocalization_distance_A(particle_diameter_A:float, lambda_A:float, resolution_A:float, defocus_A:float) -> float:
     """
@@ -78,76 +77,153 @@ def ctf_period(frequency:float, lambda_A:float, defocus_A:float, cs_A:float) -> 
     real_roots = roots[np.isclose(roots.imag, 0)] # filter out complex roots 
     return np.min(np.abs(real_roots))
 
-def ctf_limit(boxsize, pixel_size, voltage, defocus, cs, limit_resolution=15): #*
+def ctf_limit(box_size:int, pixel_size_A:float, voltage_kV:float, defocus_A:float, cs_A:float, min_bins_per_cycle:float=2):
     """
-    Calculate the Fourier pixel index and spatial frequency at which 
-        aliasing will occur for a given microscope setup.
+    Find the Fourier pixel index and up to which spatial frequency that can be represented by the given box_size and microscope settings.
 
     Parameters:
-      boxsize    (int)  : image length in [pixel].
-      pixel_size (float): real space length [Å].
-      defocus    (float): defocus value in [µm].
-      cs         (float): spherical aberration constant in [mm].
-      voltage    (float): microscope accelerating voltage in [kV].
+      boxsize      (int)  : image length in [pixel].
+      pixel_size_A (float): real space length [Å].
+      defocus_A    (float): defocus value in [Å].
+      cs_A         (float): spherical aberration constant in [Å].
+      voltage_kV   (float): microscope accelerating voltage in [kV].
+      min_bins_per_cycle (float): Minimum necessary bins required to represent one cycle (Default is Nyquist Limit: 2)
     
     Returns:
-      tuple: (Fourier pixel index, spatial frequency in [Å⁻¹])
-                 where aliasing will occur.
+      (tuple): (Fourier pixel index, spatial frequency in [Å⁻¹]),
+        Highest alias-free Fourier pixel index and spatial frequency.
+                
     
-    Notes: 
-        1. frequency_bin_width uses n_bins, not (n_bins-1), to exactly match the original script.
+	Notes:
+        This is a reimplementation of the `ctflimit` function defined in `morphology.py` from the `EMAN2/SPARX` package.
+        morphology.py: https://github.com/cryoem/eman2/blob/master/sparx/libpy/morphology.py (Original Author: Pawel A.Penczek)
+    
+    Important changes:
+        - Fix off-by-one error 
+        - Scan upwards due to non-monotonicity on the ctf_period(frequency)
     """
     logger.info("")
-    logger.info(f"CTF Limit calculation using boxsize={boxsize}, pixel_size={pixel_size}, defocus={defocus}, cs={cs}, voltage={voltage}")
+    logger.info(f"CTF Limit calculation using boxsize={box_size}, pixel_size={pixel_size_A}, defocus={defocus_A}, cs={cs_A}, voltage={voltage_kV}")
 
     # 1. Number of unique frequency bins (from 0 to Nyquist)
-    n_frequency_bins = boxsize // 2 + 1  # half of the image +1 in fourier space (removing negatives and zero)
+    n_frequency_bins = box_size // 2 + 1  # half of the image +1 in fourier space (DC and nyquist; excludes negatives)
     logger.info(f"Number of unique frequency bins: {n_frequency_bins} (from 0 to Nyquist)")
   
-    # 2. Width of frequency bins in fourier space [Å⁻¹]
-    nyquist_frequency   = 1.0/(2*pixel_size) # [Å⁻¹] maximum representable frequency for this pixel size
-    frequency_bin_width = nyquist_frequency / n_frequency_bins # [Å⁻¹]
+    # 2. Width of a frequency bin in fourier space [Å⁻¹]
+    nyquist_frequency   = 1.0/(2*pixel_size_A)        # [Å⁻¹] maximum representable frequency for this pixel size
+    frequency_bin_width = nyquist_frequency / (n_frequency_bins-1) # [Å⁻¹] # 1.0/(box_size*pixel_size) 
     logger.info(f"Nyquist Frequency: {nyquist_frequency} [Å⁻¹]")
     logger.info(f"Width of frequency bins in fourier space: {frequency_bin_width} [Å⁻¹]")
  
-    # 3. Frequency of the largest resolvable wavelength for this bin width (aliasing threshold)
-    threshold_frequency = 2*frequency_bin_width # [Å⁻¹]
-    logger.info(f"Aliasing Threshold: {threshold_frequency} [Å⁻¹]")
-    threshold_user = 1/limit_resolution
-    logger.info(f"User defined threshold: {threshold_user} [Å⁻¹]")
+    # 3. Minimum CTF period representable by the bin width
+    min_ctf_period = min_bins_per_cycle*frequency_bin_width # [Å⁻¹]
+    logger.info(f"Minimum representable CTF period: {min_ctf_period} [Å⁻¹]")
 
-    # 4. Wrapper for ctfperiod, binding fixed parameters that needed conversion
-    partial_ctf_period = partial(ctf_period,
-                                defocus_A = defocus*1e4,  # Convert µm to Å
-                                cs_A      = cs*1e7,       # Convert mm to Å
-                                lambda_A  = physics.relativistic_electron_wavelength_A(voltage_kV=voltage) # [Å]
-    )
+    # 4. Electron wavelength from accelerating voltage
+    lambda_A  = physics.relativistic_electron_wavelength_A(voltage_kV=voltage_kV) # [Å]
 
-    # 5. If no aliasing detected, default to Nyquist
+    # 5. If no alias-free bin is found, return Nyquist
     bin_result       = n_frequency_bins-1 # index of last bin
     frequency_result = nyquist_frequency  # maximum frequency
     found = False
 
-    # 6. Find the first frequency where the CTF oscillation period exceeds the threshold frequency
+    # 6. Find the frequency where the CTF oscillation period exceeds the threshold frequency
+    logger.info("Finding CTF oscillation period that exceed the threshold frequency...")
+    for bin_i in range(1, n_frequency_bins):  # from low frequencies to Nyquist
+        # 6a. Map Fourier‐bin index to spatial frequency (bin_i frequency)
+        spatial_frequency = (bin_i /(n_frequency_bins-1)) * nyquist_frequency # [Å⁻¹]
+
+        # 6b. Compute CTF period in fourier space  
+        current_ctf_period = ctf_period(frequency = spatial_frequency,
+                                        defocus_A = defocus_A,
+                                        cs_A      = cs_A,
+                                        lambda_A  = lambda_A) # [Å⁻¹]
+        logger.info(f"\tCTF period: {current_ctf_period}[Å⁻¹] >= {min_ctf_period}[Å⁻¹]? {current_ctf_period >= min_ctf_period}")
+
+        # 6c. When the CTF period exceeds the allowed sampling window, return the previous bin
+        if current_ctf_period < min_ctf_period:
+            bin_result       = bin_i - 1 
+            frequency_result = (bin_result / (n_frequency_bins - 1)) * nyquist_frequency
+            found = True
+            break # return (bin index, spatial frequency) at aliasing limit
+
+    if found:
+        logger.info(f"Aliasing begins at bin #{bin_i}; highest alias-free frequency {frequency_result} [Å⁻¹] ({1/frequency_result:.2f} Å)")
+    else:
+        logger.info(f"No aliasing up to Nyquist: {frequency_result} [Å⁻¹] ({1/frequency_result:.2f} Å)")
+    logger.info("")
+
+    return bin_result, frequency_result
+
+def ctf_limit_sparx(box_size:int, pixel_size_A:float, voltage_kV:float, defocus_um:float, cs_mm:float):
+    """
+    Find the Fourier pixel index and up to which spatial frequency that can be represented by the given box_size and microscope settings.
+
+    Parameters:
+      boxsize      (int)  : image length in [pixel].
+      pixel_size_A (float): real space length [Å].
+      defocus_um   (float): defocus value in [µm].
+      cs_mm        (float): spherical aberration constant in [mm].
+      voltage_kV   (float): microscope accelerating voltage in [kV].
+    
+    Returns:
+      (tuple): (Fourier pixel index, spatial frequency in [Å⁻¹]),
+        Highest alias-free Fourier pixel index and spatial frequency.
+    
+	Notes:
+        This is a reimplementation of the `ctflimit` function defined in `morphology.py` from the `EMAN2/SPARX` package.
+        morphology.py: https://github.com/cryoem/eman2/blob/master/sparx/libpy/morphology.py (Original Author: Pawel A.Penczek)
+    """
+    logger.info("")
+    logger.info(f"CTF Limit calculation using boxsize={box_size}, pixel_size={pixel_size_A}, defocus={defocus_um}, cs={cs_mm}, voltage={voltage_kV}")
+
+    # 1. Number of unique frequency bins (from 0 to Nyquist)
+    n_frequency_bins = box_size // 2 + 1  # half of the image +1 in fourier space (DC and nyquist; excludes negatives)
+    logger.info(f"Number of unique frequency bins: {n_frequency_bins} (from 0 to Nyquist)")
+  
+    # 2. Width of a frequency bin in fourier space [Å⁻¹]
+    nyquist_frequency   = 1.0/(2*pixel_size_A)        # [Å⁻¹] maximum representable frequency for this pixel size
+    frequency_bin_width = nyquist_frequency / n_frequency_bins # [Å⁻¹] # note: divides by n,  not n-1 (off-by-one)
+    logger.info(f"Nyquist Frequency: {nyquist_frequency} [Å⁻¹]")
+    logger.info(f"Width of frequency bins in fourier space: {frequency_bin_width} [Å⁻¹]")
+ 
+    # 3. Minimum CTF period representable by the bin width
+    min_ctf_period = 2*frequency_bin_width # [Å⁻¹]
+    logger.info(f"Minimum representable CTF period: {min_ctf_period} [Å⁻¹]")
+
+    # 4. Wrapper for ctfperiod, binding fixed parameters that needed conversion
+    partial_ctf_period = partial(ctf_period,
+                                defocus_A = defocus_um*1e4,  # Convert µm to Å
+                                cs_A      = cs_mm*1e7,       # Convert mm to Å
+                                lambda_A  = physics.relativistic_electron_wavelength_A(voltage_kV=voltage_kV) # [Å]
+    )
+
+    # 5. If no alias-free bin is found, return Nyquist
+    bin_result       = n_frequency_bins-1 # index of last bin
+    frequency_result = nyquist_frequency  # maximum frequency
+    found = False
+
+    # 6. Find the frequency where the CTF oscillation period exceeds the threshold frequency
     logger.info("Finding CTF oscillation period that exceed the threshold frequency...")
     for bin_i in range(n_frequency_bins-1, 1, -1): # from nyquist bin to lower frequencies        
         # 6a. Map Fourier‐bin index to spatial frequency (bin_i frequency)
         spatial_frequency = (bin_i /(n_frequency_bins-1)) * nyquist_frequency # [Å⁻¹]
 
         # 6b. Compute CTF period in fourier space  
-        ctf_spacing = partial_ctf_period(frequency=spatial_frequency) # [Å⁻¹]
-        logger.info(f"\tCTF spacing: {ctf_spacing}[Å⁻¹] > {threshold_frequency}[Å⁻¹]? {ctf_spacing > threshold_frequency}")
+        current_ctf_period = partial_ctf_period(frequency=spatial_frequency) # [Å⁻¹]
+        logger.info(f"\tCTF period: {current_ctf_period}[Å⁻¹] > {min_ctf_period}[Å⁻¹]? {current_ctf_period > min_ctf_period}")
 
-        # 6c. If the CTF period (in fourier-space) exceeds the allowed sampling window
-        if ctf_spacing > threshold_frequency or ctf_spacing > threshold_user:
-            bin_result       = int((spatial_frequency / frequency_bin_width) + 0.5)
+        # 6c. If the CTF period exceeds the allowed sampling window
+        if current_ctf_period > min_ctf_period:
+            bin_result       = bin_i
             frequency_result = spatial_frequency
             found = True
             break # return (bin index, spatial frequency) at aliasing limit
 
-    if not found:
-        logger.info(f"No aliasing detected, defaulting to Nyquist frequency.")
-    logger.info(f"Frequency where aliasing will occur: {frequency_result} [Å⁻¹] at bin #{bin_result} with resolution {1/frequency_result} [Å]")
+    if found:
+        logger.info(f"Highest alias-free frequency: {frequency_result} [Å⁻¹] at bin #{bin_result}, resolution {1/frequency_result:.2f} [Å]")
+    else:
+        logger.warning(f"No alias-free; returning Nyquist {frequency_result} [Å⁻¹] ({1/frequency_result:.2f} Å) ")
     logger.info("")
 
     return bin_result, frequency_result
@@ -209,13 +285,26 @@ if __name__ == "__main__": #*
     parser.add_argument("-v", "--voltage",    type=float, required=True, help="Microscope accelerating voltage in [kV].")
     parser.add_argument("-d", "--defocus",    type=float, required=True, help="Defocus value in micrometers [µm].")
     parser.add_argument("-c", "--cs",         type=float, required=True, help="Spherical aberration constant (Cs) in millimeters [mm].")
-    parser.add_argument("-limres", "--limit_resolution",  default=15, type=float, help="(Optional) Estimate CTF only up to this limiting resolution")
+    parser.add_argument("--sparx", action="store_true", help="Follow EMAN2/SPARX behavior (off-by-one and downward scan).")
 
     args = utils.cli.init_cli(__myname__, parser) # check the docstring for complete behavior; args.output_path is the resolved run directory
     ##### / #####
 
     # computation
-    result = ctf_limit(args.boxsize, args.pixel_size, args.voltage, args.defocus, args.cs, args.limit_resolution)
+    if not args.sparx:
+        result = ctf_limit(box_size  = args.boxsize, 
+                        pixel_size_A = args.pixel_size,
+                        voltage_kV   = args.voltage,
+                        defocus_A    = args.defocus*1e4,# Convert µm to Å
+                        cs_A         = args.cs*1e7,     # Convert mm to Å,
+                        min_bins_per_cycle = 2)
+    else:
+        result = ctf_limit_sparx(box_size     = args.boxsize, 
+                                 pixel_size_A = args.pixel_size,
+                                 voltage_kV   = args.voltage,
+                                 defocus_A    = args.defocus,
+                                 cs_A         = args.cs)
+
 
     # output interface
     result_dict = {"bin":int(result[0]),
