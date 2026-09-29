@@ -174,7 +174,7 @@ def ctf_limit_sparx(box_size:int, pixel_size_A:float, voltage_kV:float, defocus_
         This is a reimplementation of the `ctflimit` function defined in `morphology.py` from the `EMAN2/SPARX` package.
         morphology.py: https://github.com/cryoem/eman2/blob/master/sparx/libpy/morphology.py (Original Author: Pawel A.Penczek)
     """
-    logger.info("")
+    logger.info("SPARX Version.")
     logger.info(f"CTF Limit calculation using boxsize={box_size}, pixel_size={pixel_size_A}, defocus={defocus_um}, cs={cs_mm}, voltage={voltage_kV}")
 
     # 1. Number of unique frequency bins (from 0 to Nyquist)
