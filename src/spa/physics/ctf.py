@@ -302,9 +302,8 @@ if __name__ == "__main__": #*
         result = ctf_limit_sparx(box_size     = args.boxsize, 
                                  pixel_size_A = args.pixel_size,
                                  voltage_kV   = args.voltage,
-                                 defocus_A    = args.defocus,
-                                 cs_A         = args.cs)
-
+                                 defocus_um   = args.defocus,
+                                 cs_mm        = args.cs)
 
     # output interface
     result_dict = {"bin":int(result[0]),
