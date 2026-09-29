@@ -12,7 +12,7 @@ logger = logging.getLogger(__myname__) #*
 
 from spa import utils #*
 
-def ctf_delocalization_distance_A(particle_diameter_A, lambda_A, resolution_A, defocus_A):
+def ctf_delocalization_distance_A(particle_diameter_A:float, lambda_A:float, resolution_A:float, defocus_A:float) -> float:
     """
     Calculate the physical distance required to capture "Fresnel fringes"
         around a particle in real space caused by defocus induced delocalization.
@@ -45,7 +45,7 @@ def ctf_delocalization_distance_A(particle_diameter_A, lambda_A, resolution_A, d
     """
     return particle_diameter_A + 2*defocus_A*(lambda_A/resolution_A) # [Å]
 
-def ctf_period(frequency, lambda_A, defocus_A, cs_A):
+def ctf_period(frequency:float, lambda_A:float, defocus_A:float, cs_A:float) -> float:
     r"""
     Calculate the local oscillation period of the Contrast Transfer Function (CTF) at a given spatial frequency.
     
@@ -57,10 +57,10 @@ def ctf_period(frequency, lambda_A, defocus_A, cs_A):
         the specified spatial frequency moving towards lower frequency, which can be used to assess aliasing in Fourier space.
         
     Parameters:
-        defocus_A (float) : defocus value in (positive for underfocus) [Å].
-        cs_A      (float) : spherical aberration constant in [Å].
-        lambda_A   (float): relativistic electron wavelength in [Å].
-        frequency (float) : spatial frequency in [Å⁻¹] at which to compute the CTF oscillation period.
+        defocus_A (float): defocus value in (positive for underfocus) [Å].
+        cs_A      (float): spherical aberration constant in [Å].
+        lambda_A  (float): relativistic electron wavelength in [Å].
+        frequency (float): spatial frequency in [Å⁻¹] at which to compute the CTF oscillation period.
 
     Returns:
         float : Frequency Spacing T [Å⁻¹].
