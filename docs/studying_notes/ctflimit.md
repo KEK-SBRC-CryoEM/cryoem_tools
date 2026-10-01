@@ -24,7 +24,7 @@ and
 |---|---|---|
 | **$T$**:        | frequency interval in one full CTF cycle | $[Å⁻¹]$
 | **f**:          | frequency                                | $[Å⁻¹]$
-| **$\Delta Z$**: | defocus (positive for underfocus)        | $[Å]$ = [µm]$×1e4$
+| **$\Delta Z$**: | defocus (positive for underfocus)        | $[Å]$ = [µm] $×1e4$
 | **$\lambda$**:  | relativistically corrected electron wave length | $[Å]$
 | **$C_s$**:      | spherical aberration constant            | $[Å]$ = [mm] $×1e7$
 
