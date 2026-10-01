@@ -1,5 +1,5 @@
 # CTFLimit
-This is my personal notes when studying the `ctflimit` and `ctfperiod` functions which are implemented in [`morphology.py`](https://github.com/cryoem/eman2/blob/master/sparx/libpy/morphology.py) from the `EMAN2/SPARX` package, and published in **"CTER—Rapid estimation of CTF parameters with error assessment"** [(link)](https://www.sciencedirect.com/science/article/pii/S0304399114000199).
+This is my personal notes when studying the `ctflimit` and `ctfperiod` functions which are implemented in [`morphology.py`](https://github.com/cryoem/eman2/blob/master/sparx/libpy/morphology.py) from the `EMAN2/SPARX` package, and published in **"CTER—Rapid estimation of CTF parameters with error assessment"** [(Penczek et al., 2014)](https://www.sciencedirect.com/science/article/pii/S0304399114000199).
 
 **Goal:** Given the CTF and a box size; up to which frequency can be represented without aliasing? 
 - The CTF has a local period, the sampling grid has a spacing, and it needs enough samples per period. 
