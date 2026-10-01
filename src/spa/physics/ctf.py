@@ -52,7 +52,7 @@ def ctf_period(frequency:float, lambda_A:float, defocus_A:float, cs_A:float) -> 
         phase condition: $\gamma(f + T) - \gamma(f) = - 2\pi $ where 
         $\gamma(f) = 2\pi \left(\frac{defocus \lambda frequency^2}{2} - \frac{cs \lambda^3 frequency^4}{4} \right)$.
 
-    The result represents the frequency interval between two consecutive peaks of the CTF from
+    The result represents the frequency interval T in one cycle of the CTF from
         the specified spatial frequency moving towards lower frequency, which can be used to assess aliasing in Fourier space.
         
     Parameters:
