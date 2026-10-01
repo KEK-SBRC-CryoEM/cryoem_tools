@@ -7,7 +7,7 @@ This is my personal notes when studying the `ctflimit` and `ctfperiod` functions
 - Worth noting, we are interested in a complete cycle ($2\pi$), not from one zero-crossing to another (half-cycle) and not necessarily peak-to-peak.
 
 $$
-\gamma(f + T) - \gamma(f) = - 2\pi \tag{0}
+\gamma(f + T) - \gamma(f) = - 2\pi \qquad (0)
 $$
 
 The $−2\pi$ advance means $T$ is negative, this interval $T$ is the cycle below $f$. As such, at the end, we take $|T|$.
@@ -15,7 +15,7 @@ The $−2\pi$ advance means $T$ is negative, this interval $T$ is the cycle belo
 where 
 
 $$
-\frac{\gamma(f)}{2 \pi}   = \left( \frac{\Delta Z \lambda f^2}{2}  - \frac{C_s \lambda^3 f^4}{4} \right) \tag{1}
+\frac{\gamma(f)}{2 \pi}   = \left( \frac{\Delta Z \lambda f^2}{2}  - \frac{C_s \lambda^3 f^4}{4} \right) \qquad (1)
 $$
 
 and
@@ -31,22 +31,24 @@ and
 equivalently
 
 $$
-\frac{\gamma(f+T)}{2 \pi}   = \left( \frac{\Delta Z \lambda (f+T)^2}{2}  - \frac{C_s \lambda^3 (f+T)^4}{4} \right)  \tag{2}
+\frac{\gamma(f+T)}{2 \pi}   = \left( \frac{\Delta Z \lambda (f+T)^2}{2}  - \frac{C_s \lambda^3 (f+T)^4}{4} \right)  \qquad (2)
 $$
 
 ---
 \
 Expanding the squares in $(2)$:
 
-
-$(3)$ $ (f+T)^2 = f^2 + 2 f T + T^2 $ 
-
-$(4)$ $ (f+T)^4 = f^4 + 4 f^3 T + 6 f^2 T^2 + 4 f T^3 + T^4 $ 
+$$
+\begin{array}{rlr}
+(f+T)^2 & {}= f^2 + 2 f T + T^2 \qquad (3) \\
+(f+T)^4 & {}= f^4 + 4 f^3 T + 6 f^2 T^2 + 4 f T^3 + T^4 \qquad (4)
+\end{array}
+$$
 
 Substituing $(3)$ and $(4)$ into $(2)$:
  
 $$
-\frac{\gamma(f)}{2 \pi} = \left( \frac{\Delta Z \lambda (f^2 + 2 f T + T^2)}{2}  - \frac{C_s \lambda^3 (f^4 + 4 f^3 T + 6 f^2 T^2 + 4 f T^3 + T^4)}{4} \right) \tag{5}
+\frac{\gamma(f)}{2 \pi} = \left( \frac{\Delta Z \lambda (f^2 + 2 f T + T^2)}{2}  - \frac{C_s \lambda^3 (f^4 + 4 f^3 T + 6 f^2 T^2 + 4 f T^3 + T^4)}{4} \right) \qquad (5)
 $$
 
 --- 
@@ -68,9 +70,9 @@ and
 
 Applying the sign from $(0)$ into $(1)$:
 
-$(6)$ $
-\left( - \frac{\Delta Z \lambda f^2}{2}  + \frac{C_s \lambda^3 f^4}{4} \right)
-$
+$$
+\left( - \frac{\Delta Z \lambda f^2}{2}  + \frac{C_s \lambda^3 f^4}{4} \right) \qquad (6)
+$$
 
 and lets call
 - (6a) $- 0.5 \Delta Z \lambda f^2$
@@ -83,16 +85,11 @@ Simplifying, $(5)$ and $(6)$ into $(0)$:
 Resulting in:
 
 $$
-
-0.5  \Delta Z \lambda   2 f   T 
-+ 0.5  \Delta Z \lambda                 T^2 \\
-- 0.25 C_s      \lambda^3 4 f^3 T 
-- 0.25 C_s      \lambda^3 6 f^2 T^2
-- 0.25 C_s      \lambda^3 4 f   T^3
-- 0.25 C_s      \lambda^3               T^4
-+ 1
-= 0
-\tag{7}
+\begin{aligned}
+& 0.5  \Delta Z \lambda   2 f   T + 0.5  \Delta Z \lambda T^2 \\
+& - 0.25 C_s      \lambda^3 4 f^3 T - 0.25 C_s      \lambda^3 6 f^2 T^2 \\
+& - 0.25 C_s      \lambda^3 4 f   T^3 - 0.25 C_s      \lambda^3               T^4 + 1 = 0 \qquad (7)
+\end{aligned}
 $$
 
 --- 
