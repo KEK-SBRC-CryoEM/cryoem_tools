@@ -39,13 +39,9 @@ $$
 Expanding the squares in $(2)$:
 
 
-$(3)$ $
-(f+T)^2 = f^2 + 2 f T + T^2 
-$ 
+$(3)$ $ (f+T)^2 = f^2 + 2 f T + T^2 $ 
 
-$(4)$ $
-(f+T)^4 = f^4 + 4 f^3 T + 6 f^2 T^2 + 4 f T^3 + T^4
-$ 
+$(4)$ $ (f+T)^4 = f^4 + 4 f^3 T + 6 f^2 T^2 + 4 f T^3 + T^4 $ 
 
 Substituing $(3)$ and $(4)$ into $(2)$:
  
