@@ -111,7 +111,7 @@ if __name__ == "__main__":
         logger.info(f"+ saved to {outp}")
 
     # print and save output
-    ## replacing volume and mask data by its path
+    ## replace volume and mask data by its filepath
     alignment_data["volume"] = avolume_path
     alignment_data["mask"]   = amask_path
     output = utils.output.print_and_save(alignment_data, 
