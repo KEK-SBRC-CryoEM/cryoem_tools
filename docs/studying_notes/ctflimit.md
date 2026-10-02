@@ -7,7 +7,7 @@ This is my personal notes when studying the `ctflimit` and `ctfperiod` functions
 - Worth noting, we are interested in a complete cycle ($2\pi$), not from one zero-crossing to another (half-cycle) and not necessarily peak-to-peak.
 
 $$
-\gamma(f + T) - \gamma(f) = - 2\pi \qquad (0)
+\gamma(f + T) - \gamma(f) = {- 2\pi} \qquad (0)
 $$
 
 The $−2\pi$ advance means $T$ is negative, this interval $T$ is the cycle below $f$. As such, at the end, we take $|T|$.
