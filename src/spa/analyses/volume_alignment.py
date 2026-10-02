@@ -31,20 +31,16 @@ def do_alignment(volume, mask, threshold):
         logger.info("Segmenting volume...")
         segmented = volops.binary_segmentation(volume, threshold, is_binary_mask=False)
 
-    # 2. center of the volume
-    logger.info("Computing the enclosing sphere...")
-
-    coords = volops.get_coordinates(segmented)
-    initial_enclosing_sphere = volops.compute_enclosing_sphere(coords)
-
-    # 3. pca alignment
+    # 2. pca alignment
     logger.info("Aligning...")
-    alignment_data = volops.covariance_alignment(binary_mask=segmented, 
-                                                 center=initial_enclosing_sphere["center"], 
-                                                 volume=volume,
-                                                 center_mode="box")
+    alignment_data = volops.covariance_alignment(volume=volume,
+                                                 binary_mask=segmented, 
+                                                 center_mode="sphere",
+                                                 order=0)
 
-    alignment_data["initial_enclosing_sphere"] = initial_enclosing_sphere
+    # todo: move this to figure generation
+    coords = volops.get_coordinates(segmented)
+    alignment_data["initial_enclosing_sphere"] = volops.compute_enclosing_sphere(coords)
     coords = volops.get_coordinates(alignment_data["mask"])
     alignment_data["aligned_enclosing_sphere"] = volops.compute_enclosing_sphere(coords)
 

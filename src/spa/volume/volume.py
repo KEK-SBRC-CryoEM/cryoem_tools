@@ -1,6 +1,9 @@
 import numpy as np
-from miniball import miniball
+
+from scipy import stats
 from scipy.ndimage import affine_transform
+
+from miniball import miniball
 
 ## projections ##
 def get_summed_projection(volume):
@@ -125,47 +128,75 @@ def get_center(coordinates, mode="coordinates") -> np.ndarray:
         return compute_enclosing_sphere(coordinates)["center"]
     raise ValueError(f"get_center: unknown mode {mode}; expected 'coordinates' or 'sphere'")
 
-def covariance_alignment(binary_mask, center, volume=None, center_mode="box"):
-    # 1. get components by covariance matrix (covariance on the coordinates)
-    coords = np.column_stack(np.where(binary_mask==1)).astype(np.float32)
+def apply_transform(volume, R, pivot, order:int=0) -> np.ndarray:
+    """ Apply affine transform on volume for matrix R and pivot with interpolation defined by 'order'."""
+    box_center = (np.array(volume.shape) - 1) / 2.0
+    offset = pivot - R @ box_center
+
+    rotate_volume = affine_transform(volume, R, 
+                                     offset = offset, 
+                                     order  = order, 
+                                     mode   = "constant", 
+                                     cval   = 0.0)
     
-    # 2. pca rotation
-    cov = np.cov(coords, rowvar=False)
-    eigvals, eigvecs = np.linalg.eigh(cov)
+    return rotate_volume
 
-    # 3. centering
-    R = eigvecs
-    if center_mode == "mass":
-        centroid = coords.mean(axis=0)
-        offset = center - R @ centroid
-    elif center_mode == "box":
-        box_center = (np.array(binary_mask.shape) - 1) / 2.0
-        offset = center - R @ box_center
-    else:
-        raise Exception(f"covariance_alignment encountered an unkown value for 'center_mode': {center_mode}. Expected values are 'mass' or 'box'")
+def compute_skewness_directions(coordinates, axes):
+    """
+    Chooses the directions of the principal axes by skewness.
 
-    # 4. apply
-    if volume is not None:
-        rotated_volume = affine_transform(volume, R,
-            offset=offset,
-            order=0,
-            mode='constant',
-            cval=0.0
-        )
+    A PCA rotation is arbitrary for 180° rotations (eg: top-down and bottom-up are equivalent).
+    Find the two most skewed axes, determine the direction towards the longer tail (positive skewness).
+    Third axis follows the other two directions.
 
-    rotated_mask  = affine_transform(binary_mask, R,
-        offset=offset,
-        order=0,
-        mode='constant',
-        cval=0.0
-    )
+    Parameters:
+        coordinates (np.ndarray): (N, 3) voxel coordinates
+        axes (np.ndarray): (3, 3) principal axes (shortest, middle, longest), right-handed (det = +1).
 
-    result = {"volume":  rotated_volume if volume is not None else None,
-              "mask":    rotated_mask,
+    Returns:
+        np.ndarray: (3, 3) axes with directions chosen, same column order, det = +1.
+        np.ndarray: (3,) skewness along each axis
+    """
+    
+    gamma = stats.skew(coordinates @ axes, axis=0)
+    order = np.argsort(-np.abs(gamma))                     # most skewed to least
+    signs = np.where(gamma < 0, -1.0, 1.0)                 # point each axis toward its longer tail
+    signs[order[2]] = signs[order[0]] * signs[order[1]]    # least skewed axis: keep det = +1 (no mirror)
+    return axes * signs, gamma * signs
+
+def compute_principal_axes(coordinates) -> np.ndarray:
+    """
+    Principal axes of the coordinates, as the matrix for affine_transform.
+
+    Parameters:
+        coordinates (np.ndarray): (N, 3) voxel coordinates, array order (z, y, x).
+
+    Returns:
+        np.ndarray: (3, 3) matrix 
+    """
+    cov = np.cov(coordinates, rowvar=False)
+    eigvals, eigvecs = np.linalg.eigh(cov) # ascending: columns = shortest, middle, longest 
+    if np.linalg.det(eigvecs) < 0:         # prevent mirroring (sign is arbitrary)
+        eigvecs[:, 1] *= -1
+    return eigvals, eigvecs
+
+def covariance_alignment(volume, binary_mask, center_mode="coordinates", order=3):
+    coords = get_coordinates(binary_mask)
+    pivot  = get_center(coords, center_mode)
+    eigvals, eigvecs = compute_principal_axes(coords) # find longest view, handle mirroring
+    axes, skewness   = compute_skewness_directions(coords, eigvecs) # handle 180 rotation ambiguity
+
+    R = axes
+    result = {"volume" : apply_transform(volume,      R, pivot, order=order) if volume is not None else None,
+              "mask"   : apply_transform(binary_mask, R, pivot, order=0),
               "eigvals": eigvals,
               "eigvecs": eigvecs,
-              "offset":  offset,
+              "offset" : pivot,
     }
 
+    # result = {"volume" : volume,
+    #           "mask"   : binary_mask}
+
     return result
+
 

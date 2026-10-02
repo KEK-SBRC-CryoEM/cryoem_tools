@@ -12,8 +12,6 @@ def normalize_to_uint8(img, max_value, min_value=0):
     img = (img - min_value) / (max_value - min_value)
     return (img * 255).astype(np.uint8)
 
-
-
 def binary_to_grayscale(img):
     img_gray = img.astype(np.uint8) * 255
     return img_gray
@@ -49,5 +47,5 @@ def show_slices(imgs_gray, spheres=None, title="", output_path=None):
     fig.suptitle(title, fontsize=14)
     if output_path:
         plt.savefig(output_path, dpi=300, bbox_inches='tight')
-    else:
-        plt.show()
+
+    return fig

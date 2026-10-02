@@ -13,9 +13,12 @@ from .volume import (
     compute_enclosing_sphere,
     create_spherical_mask,
     get_spherical_kernel,
-    covariance_alignment,
+    # alignment
     get_coordinates,
     get_center,
+    apply_transform,
+    compute_principal_axes,
+    covariance_alignment,
 )
 
 __all__ = [
@@ -28,7 +31,10 @@ __all__ = [
     "compute_enclosing_sphere",
     "create_spherical_mask",
     "get_spherical_kernel",
-    "covariance_alignment",
+    # alignment
     "get_coordinates",
-    "get_center"
+    "get_center",
+    "apply_transform",
+    "compute_principal_axes",
+    "covariance_alignment",
 ]
