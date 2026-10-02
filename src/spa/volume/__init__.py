@@ -14,6 +14,8 @@ from .volume import (
     create_spherical_mask,
     get_spherical_kernel,
     covariance_alignment,
+    get_coordinates,
+    get_center,
 )
 
 __all__ = [
@@ -27,4 +29,6 @@ __all__ = [
     "create_spherical_mask",
     "get_spherical_kernel",
     "covariance_alignment",
+    "get_coordinates",
+    "get_center"
 ]

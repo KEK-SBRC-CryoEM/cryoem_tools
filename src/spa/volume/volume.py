@@ -59,11 +59,12 @@ def binary_segmentation(data, threshold=0, is_binary_mask=False):
 def is_binary(mask):
     return np.all((mask == 0) | (mask == 1))
 
-## miniball enclosing sphere ##
-def get_coordinates(volume_segmented) -> np.ndarray:
-    """(N, 3) voxel coordinates of a mask or segmented volume"""
-    return np.column_stack(np.where(volume_segmented == 1)).astype(np.float64)
+## image processing ##
+def get_spherical_kernel(size):
+    z, y, x = np.ogrid[-size//2 : size//2, -size//2 : size//2, -size//2 : size//2]
+    return x**2 + y**2 + z**2 <= (size/2)**2
 
+## miniball enclosing sphere ##
 def compute_enclosing_sphere(coordinates):
     """
     Computes the smallest sphere enclosing the given coordinates.
@@ -108,10 +109,21 @@ def create_spherical_mask(shape, radius, center=None):
     
     return mask
 
-## processing ##
-def get_spherical_kernel(size):
-    z, y, x = np.ogrid[-size//2 : size//2, -size//2 : size//2, -size//2 : size//2]
-    return x**2 + y**2 + z**2 <= (size/2)**2
+## alignment ##
+def get_coordinates(volume_segmented) -> np.ndarray:
+    """(N, 3) voxel coordinates of a mask or segmented volume"""
+    return np.column_stack(np.where(volume_segmented == 1)).astype(np.float64)
+
+def get_center(coordinates, mode="coordinates") -> np.ndarray:
+    """Define the rotation pivot
+        - "coordinates" = coordinate mean
+        - "sphere"      = enclosing-sphere center.
+    """
+    if mode == "coordinates":
+        return coordinates.mean(axis=0)
+    elif mode == "sphere":
+        return compute_enclosing_sphere(coordinates)["center"]
+    raise ValueError(f"get_center: unknown mode {mode}; expected 'coordinates' or 'sphere'")
 
 def covariance_alignment(binary_mask, center, volume=None, center_mode="box"):
     # 1. get components by covariance matrix (covariance on the coordinates)
