@@ -60,22 +60,31 @@ def is_binary(mask):
     return np.all((mask == 0) | (mask == 1))
 
 ## miniball enclosing sphere ##
-def compute_enclosing_sphere(binary_mask):
+def get_coordinates(volume_segmented) -> np.ndarray:
+    """(N, 3) voxel coordinates of a mask or segmented volume"""
+    return np.column_stack(np.where(volume_segmented == 1)).astype(np.float64)
+
+def compute_enclosing_sphere(coordinates):
     """
-    Computes the smallest enclosing sphere around the segmented region 
-        of a 3D density map, based on a given threshold.
+    Computes the smallest sphere enclosing the given coordinates.
 
     Parameters:
-        volume_segmented (np.ndarray): 3D numpy array representing the density volume after binary segmentation.
+        coordinates (np.ndarray): (N, 3) array of voxel coordinates of the segmented region,
+            e.g. from get_coordinates(binary_mask).
 
     Returns:
-        dict: Sphere information (e.g., center, radius, and diameter) from the miniball algorithm.
+        dict: Sphere from the miniball algorithm, with "diameter" added:
+            "center"   (np.ndarray, shape (3,)): sphere center
+            "radius"   (float): radius
+            "diameter" (float): 2 * radius
+
+    Raises:
+        ValueError: if coordinates is empty.
     """
-    coords = np.column_stack(np.where(binary_mask==1)).astype(np.float64)
-    if coords.size == 0:
-        raise ValueError("enclosing_sphere: no coordinates given. Input must be segmented binary.")
-    result = miniball(coords)
-    result["diameter"] = 2*result["radius"]
+    if coordinates.size == 0:
+        raise ValueError("compute_enclosing_sphere: no coordinates given (empty segmentation?).")
+    result = miniball(coordinates)
+    result["diameter"] = 2 * result["radius"]
     return result
 
 ## mask ##

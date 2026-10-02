@@ -34,7 +34,8 @@ def estimate_particle_size(volume, threshold, kernel_size=3, kernel_spherical=Tr
     volume_processed = ndimage.binary_closing(volume_processed, structure=kernel)
 
     logger.info(f"Finding the enclosed sphere...")
-    sphere = volops.compute_enclosing_sphere(volume_processed)
+    coords = volops.get_coordinates(volume_processed)
+    sphere = volops.compute_enclosing_sphere(coords)
     return sphere
 
 if __name__ == "__main__":

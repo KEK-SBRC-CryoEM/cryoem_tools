@@ -33,7 +33,9 @@ def do_alignment(volume, mask, threshold):
 
     # 2. center of the volume
     logger.info("Computing the enclosing sphere...")
-    initial_enclosing_sphere = volops.compute_enclosing_sphere(segmented)
+
+    coords = volops.get_coordinates(segmented)
+    initial_enclosing_sphere = volops.compute_enclosing_sphere(coords)
 
     # 3. pca alignment
     logger.info("Aligning...")
@@ -43,7 +45,8 @@ def do_alignment(volume, mask, threshold):
                                                  center_mode="box")
 
     alignment_data["initial_enclosing_sphere"] = initial_enclosing_sphere
-    alignment_data["aligned_enclosing_sphere"] = volops.compute_enclosing_sphere(alignment_data["mask"])
+    coords = volops.get_coordinates(alignment_data["mask"])
+    alignment_data["aligned_enclosing_sphere"] = volops.compute_enclosing_sphere(coords)
 
     return alignment_data
 
