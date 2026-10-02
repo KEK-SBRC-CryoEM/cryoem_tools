@@ -53,18 +53,27 @@ $$
 
 --- 
 
-Applying distributive: 
-- (5a) $0.5 \Delta Z \lambda f^2$
-- (5b) $0.5 \Delta Z \lambda 2 f T$
-- (5c) $0.5 \Delta Z \lambda T^2$
+Applying distributive:
+
+$$
+\begin{array}{llcll}
+\text{(5a)} \qquad & 0.5 \Delta Z \lambda &   & f^2 &     \\
+\text{(5b)} \qquad & 0.5 \Delta Z \lambda & 2 & f   & T   \\
+\text{(5c)} \qquad & 0.5 \Delta Z \lambda &   &     & T^2
+\end{array}
+$$
 
 and
 
-- (5d) $- 0.25 C_s \lambda^3 f^4$
-- (5e) $- 0.25 C_s \lambda^3 4 f^3 T$
-- (5f) $- 0.25 C_s \lambda^3 6 f^2 T^2$
-- (5g) $- 0.25 C_s \lambda^3 4 f T^3$
-- (5h) $- 0.25 C_s \lambda^3 T^4$
+$$
+\begin{array}{lcllr}
+\text{(5d)} \qquad {-0.25} C_s \lambda^3 &   & f^4 &     \\
+\text{(5e)} \qquad {-0.25} C_s \lambda^3 & 4 & f^3 & T   \\
+\text{(5f)} \qquad {-0.25} C_s \lambda^3 & 6 & f^2 & T^2 \\
+\text{(5g)} \qquad {-0.25} C_s \lambda^3 & 4 & f   & T^3 \\
+\text{(5h)} \qquad {-0.25} C_s \lambda^3 &   &     & T^4 
+\end{array}
+$$
 
 ---
 
@@ -75,8 +84,13 @@ $$
 $$
 
 and lets call
-- (6a) $- 0.5 \Delta Z \lambda f^2$
-- (6b) $0.25 C_s \lambda^3 f^4$
+
+$$
+\begin{array}{lclcll}
+\text{(6a)} \qquad & - & 0.5  & \Delta Z & \lambda   & f^2 \\
+\text{(6b)} \qquad & + & 0.25 & C_s      & \lambda^3 & f^4
+\end{array}
+$$
 
 Simplifying, $(5)$ and $(6)$ into $(0)$:
 - (5a) opposes (6a) -> 0
@@ -87,8 +101,8 @@ Resulting in:
 $$
 \begin{aligned}
 & 0.5  \Delta Z \lambda   2 f   T + 0.5  \Delta Z \lambda T^2 \\
-& - 0.25 C_s      \lambda^3 4 f^3 T - 0.25 C_s      \lambda^3 6 f^2 T^2 \\
-& - 0.25 C_s      \lambda^3 4 f   T^3 - 0.25 C_s      \lambda^3               T^4 + 1 = 0 \qquad (7)
+& \qquad - 0.25 C_s      \lambda^3 4 f^3 T - 0.25 C_s      \lambda^3 6 f^2 T^2 \\
+& \qquad - 0.25 C_s      \lambda^3 4 f   T^3 - 0.25 C_s      \lambda^3               T^4 + 1 = 0 \qquad (7)
 \end{aligned}
 $$
 
@@ -96,39 +110,36 @@ $$
 \
 To align with CTF Period, lets multiply by -1 and lets name the terms:
 
-| Name | | | | | | |
-| :--- | :--- | :---   | :---:      | :---:       | ---:    | ---:    | 
-| (7a) |  $-$ | $0.5$  | $\Delta Z$ | $\lambda$   | $2 f$   |  $T$    |
-| (7b) |  $-$ | $0.5$  | $\Delta Z$ | $\lambda$   |         |  $T^2$  |
-| (7c) |  $+$ | $0.25$ | $C_s$      | $\lambda^3$ | $4 f^3$ |  $T$    |
-| (7d) |  $+$ | $0.25$ | $C_s$      | $\lambda^3$ | $6 f^2$ |  $T^2$  |
-| (7e) |  $+$ | $0.25$ | $C_s$      | $\lambda^3$ | $4 f$   |  $T^3$  |
-| (7f) |  $+$ | $0.25$ | $C_s$      | $\lambda^3$ |         |  $T^4$  |
-| (7g) |  $-$ | 1 | | | | |
-|      |  $=$ | 0 | | | | |
+$$
+\begin{array}{lclclcll}
+\text{(7a)} \qquad & - & 0.5  & \Delta Z & \lambda   & 2 & f   & T   \\
+\text{(7b)} \qquad & - & 0.5  & \Delta Z & \lambda   &   &     & T^2 \\
+\text{(7c)} \qquad & + & 0.25 & C_s      & \lambda^3 & 4 & f^3 & T   \\
+\text{(7d)} \qquad & + & 0.25 & C_s      & \lambda^3 & 6 & f^2 & T^2 \\
+\text{(7e)} \qquad & + & 0.25 & C_s      & \lambda^3 & 4 & f   & T^3 \\
+\text{(7f)} \qquad & + & 0.25 & C_s      & \lambda^3 &   &     & T^4 \\
+& - & 1 \\
+& = & 0
+\end{array}
+$$
 
 Grouping by terms:
 
-$T^4$: (7f)
-- $+ 0.25 C_s      \lambda^3$
+$T^{4}: \qquad \text{(7f)} \qquad {+ 0.25} C_s      \lambda^3$ 
 
-$T^3$: (7e)
-- $+ 0.25 C_s      \lambda^3 4 f$
+$T^{3}: \qquad \text{(7e)} \qquad {+ 0.25} C_s      \lambda^3 4 f$
 
-$T^2$: $(7b+7d)$
-- $- 0.5  \Delta Z \lambda               + 0.25 C_s \lambda^3 6 f^2$
+$T^{2}: \qquad \text{(7b+7d)} \qquad {- 0.5}  \Delta Z \lambda               + 0.25 C_s \lambda^3 6 f^2$
 
-$T^1$: (7a+7c)
-- $- 0.5  \Delta Z \lambda   2 f + 0.25 C_s \lambda^3 4 f^3$
+$T^{1}: \qquad \text{(7a+7c)} \qquad {- 0.5}  \Delta Z \lambda   2 f + 0.25 C_s \lambda^3 4 f^3$
 
-$T^0$: (7g)
-- $- 1$
+$T^{0}: \qquad \text{(7g)} \qquad {- 1}$
 
 ---
 \
 Finally, T is found by solving $(7)$ as a 4th order polynomial. The physical root is negative (from all 4 possible ones) since we are looking from $f$ towards the lower frequency $f+T$. The code takes the smallest $|T|$ (is the smallest root always physical?) and compare it against 2 fourier pixels, where: 
 
-$ \text{Fourier pixel width} = 1/(\text{pixel size} × \text{box size})$. 
+$\text{Fourier pixel width} = 1/(\text{pixel size } × \text{ box size})$. 
 
 Aliasing happens when $|T| ≤ 2 × \text{fourier pixels}$.
 
