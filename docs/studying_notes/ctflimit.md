@@ -48,7 +48,7 @@ $$
 Substituing $(3)$ and $(4)$ into $(2)$:
  
 $$
-\frac{\gamma(f)}{2 \pi} = \left( \frac{\Delta Z \lambda (f^2 + 2 f T + T^2)}{2}  - \frac{C_s \lambda^3 (f^4 + 4 f^3 T + 6 f^2 T^2 + 4 f T^3 + T^4)}{4} \right) \qquad (5)
+\frac{\gamma(f+T)}{2 \pi} = \left( \frac{\Delta Z \lambda (f^2 + 2 f T + T^2)}{2}  - \frac{C_s \lambda^3 (f^4 + 4 f^3 T + 6 f^2 T^2 + 4 f T^3 + T^4)}{4} \right) \qquad (5)
 $$
 
 --- 
@@ -80,7 +80,7 @@ $$
 Applying the sign from $(0)$ into $(1)$:
 
 $$
-\left( - \frac{\Delta Z \lambda f^2}{2}  + \frac{C_s \lambda^3 f^4}{4} \right) \qquad (6)
+\frac{\gamma(f)}{2 \pi} = \left( - \frac{\Delta Z \lambda f^2}{2}  + \frac{C_s \lambda^3 f^4}{4} \right) \qquad (6)
 $$
 
 and lets call
