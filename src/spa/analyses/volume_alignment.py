@@ -12,16 +12,19 @@ from spa.visualization import volume as visvol
 __myname__ = Path(__file__).stem
 logger = logging.getLogger(__myname__)
 
-def generate_figures(segmented, initial_sphere, aligned_sphere, output_path):
+def generate_figures(segmented, initial_sphere, aligned_sphere, output_path, title=""):
     # define sphere coloring
     initial_sphere["plot"] = {"color": (255, 0, 0), "alpha": 1}
     aligned_sphere["plot"] = {"color": (0, 255, 0), "alpha": 1}
 
-    #
-    slices     = volops.get_orthogonal_slices(segmented)
-    imgs_gray  = [visvol.normalize_to_uint8(img, max_value=1) for img in slices]
+    # possible an option in the future
+    #slices     = volops.get_orthogonal_slices(segmented)
+    # slices     = volops.get_summed_projection(segmented)
+    slices     = volops.get_max_projection(segmented)
+    maxv, minv = max(img.max() for img in slices), min(img.min() for img in slices)
+    imgs_gray  = [visvol.normalize_to_uint8(img, max_value=maxv, min_value=minv) for img in slices]
     visvol.show_slices(imgs_gray, spheres=[initial_sphere, aligned_sphere], 
-                title="Aligned and Centered Volume (Orthogonal Slices)", 
+                title=title, 
                 output_path=output_path)
 
 def do_alignment(volume, mask, threshold):
@@ -37,6 +40,8 @@ def do_alignment(volume, mask, threshold):
                                                  binary_mask=segmented, 
                                                  center_mode="sphere",
                                                  order=0)
+
+    alignment_data["box_size"] = alignment_data["volume"].shape[0]
 
     # todo: move this to figure generation
     coords = volops.get_coordinates(segmented)
@@ -85,9 +90,8 @@ if __name__ == "__main__":
 
     logger.info(f"Running alignment...")
     alignment_data = do_alignment(volume, mask, args.threshold)
-    alignment_data["box_size"] = alignment_data["volume"].shape[0]
 
-    # saving aligned volume
+    # save aligned volume and mask
     avolume_path = os.path.join(args.output_path or ".", f"aligned_{Path(args.volume).name}")
     amask_path   = os.path.join(args.output_path or ".", f"aligned_{Path(args.mask).name}") if args.mask else None
 
@@ -102,10 +106,19 @@ if __name__ == "__main__":
     # figures
     if args.save:
         logger.info("Generating figures...")
+        outp = os.path.join(args.output_path or ".", "original_view.png")
+        generate_figures(segmented      = mask if mask is not None else volops.binary_segmentation(volume, args.threshold),
+                         initial_sphere = alignment_data["initial_enclosing_sphere"], 
+                         aligned_sphere = alignment_data["aligned_enclosing_sphere"], 
+                         title          = "Original View (Orthogonal Slices)",
+                         output_path    = outp)
+
+
         outp = os.path.join(args.output_path or ".", "orthogonal_view.png")
         generate_figures(segmented      = alignment_data["mask"],
                          initial_sphere = alignment_data["initial_enclosing_sphere"], 
                          aligned_sphere = alignment_data["aligned_enclosing_sphere"], 
+                         title          = "Aligned and Centered Volume (Orthogonal Slices)",
                          output_path    = outp)
         logger.info(f"+ saved to {outp}")
 

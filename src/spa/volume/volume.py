@@ -6,6 +6,9 @@ from scipy.ndimage import affine_transform
 from miniball import miniball
 
 ## projections ##
+def get_max_projection(volume):
+    return [volume.max(axis=i) for i in [0,1,2]]
+
 def get_summed_projection(volume):
     return [volume.sum(axis=i) for i in [0,1,2]]
 
@@ -141,27 +144,33 @@ def apply_transform(volume, R, pivot, order:int=0) -> np.ndarray:
     
     return rotate_volume
 
-def compute_skewness_directions(coordinates, axes):
+def compute_axes_directions(coordinates, axes):
     """
-    Chooses the directions of the principal axes by skewness.
+    Resolve the sign ambiguity of PCA principal axes using distribution skewness and enforcing det>0.
 
-    A PCA rotation is arbitrary for 180° rotations (eg: top-down and bottom-up are equivalent).
-    Find the two most skewed axes, determine the direction towards the longer tail (positive skewness).
-    Third axis follows the other two directions.
+    Each eigenvector has a sign ambiguity that makes it not possible to distinguish 180° rotations (e.g.: top-down and bottom-up are equivalent), and an arbitrary combination of signs can result in mirroring.
+
+    This function orient the two axes with the largest absolute skewness toward the longer tail (positive skewness). The remaining axis is oriented so that the frame is right-handed, i.e. ``det(axes) = +1``.
 
     Parameters:
         coordinates (np.ndarray): (N, 3) voxel coordinates
-        axes (np.ndarray): (3, 3) principal axes (shortest, middle, longest), right-handed (det = +1).
+        axes (np.ndarray): (3, 3) principal axes (shortest, middle, longest).
+            - ``axes[:, 0]`` — shortest principal axis
+            - ``axes[:, 1]`` — middle principal axis
+            - ``axes[:, 2]`` — longest principal axis
 
     Returns:
-        np.ndarray: (3, 3) axes with directions chosen, same column order, det = +1.
-        np.ndarray: (3,) skewness along each axis
+        np.ndarray: (3, 3) axes with chosen directions.
+        np.ndarray: (3,) skewness projections along each axis
     """
-    
+    # sign order by skewness
     gamma = stats.skew(coordinates @ axes, axis=0)
-    order = np.argsort(-np.abs(gamma))                     # most skewed to least
-    signs = np.where(gamma < 0, -1.0, 1.0)                 # point each axis toward its longer tail
-    signs[order[2]] = signs[order[0]] * signs[order[1]]    # least skewed axis: keep det = +1 (no mirror)
+    order = np.argsort(-np.abs(gamma))             # most skewed to least
+    signs = np.where(gamma < 0, -1.0, 1.0)         # point each axis toward its longer tail
+
+    # enforce signs and determinant>0
+    determinant = np.linalg.det(axes)
+    signs[order[2]] = signs[order[0]] * signs[order[1]] * np.sign(determinant)   # least skewed: det = +1
     return axes * signs, gamma * signs
 
 def compute_principal_axes(coordinates) -> np.ndarray:
@@ -176,26 +185,24 @@ def compute_principal_axes(coordinates) -> np.ndarray:
     """
     cov = np.cov(coordinates, rowvar=False)
     eigvals, eigvecs = np.linalg.eigh(cov) # ascending: columns = shortest, middle, longest 
-    if np.linalg.det(eigvecs) < 0:         # prevent mirroring (sign is arbitrary)
-        eigvecs[:, 1] *= -1
     return eigvals, eigvecs
 
 def covariance_alignment(volume, binary_mask, center_mode="coordinates", order=3):
     coords = get_coordinates(binary_mask)
     pivot  = get_center(coords, center_mode)
-    eigvals, eigvecs = compute_principal_axes(coords) # find longest view, handle mirroring
-    axes, skewness   = compute_skewness_directions(coords, eigvecs) # handle 180 rotation ambiguity
+    # find longest, middle, shortest view
+    eigvals, eigvecs = compute_principal_axes(coords) 
+    # find the direction of each view 
+    axes, skewness   = compute_axes_directions(coords, eigvecs) # PCA sign ambiguities: 180 rotation and mirroring
 
     R = axes
-    result = {"volume" : apply_transform(volume,      R, pivot, order=order) if volume is not None else None,
-              "mask"   : apply_transform(binary_mask, R, pivot, order=0),
-              "eigvals": eigvals,
-              "eigvecs": eigvecs,
-              "offset" : pivot,
+    result = {"volume"  : apply_transform(volume,      R, pivot, order=order) if volume is not None else None,
+              "mask"    : apply_transform(binary_mask, R, pivot, order=0),
+              "eigvals" : eigvals,
+              "eigvecs" : eigvecs,
+              "skewness": skewness,
+              "offset"  : pivot,
     }
-
-    # result = {"volume" : volume,
-    #           "mask"   : binary_mask}
 
     return result
 
