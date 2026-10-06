@@ -1,6 +1,6 @@
 # Volume Alignment
 
-Standardizes the pose of a cryo-EM volume (`.mrc`) to the box orthogonal axes based on its shape: the longest dimension of the particle along X, the middle one along Y, and the shortest along Z. Looking down Z, which is the default view in ChimeraX, shows the particle's largest view.
+Standardizes the pose of a cryo-EM volume (`.mrc`) by aligning it to the orthogonal axes so the longest view is on the XY plane (view from Z) and the shortest view on YZ (view from X). Looking down Z (default view in ChimeraX) shows the particle's largest view.
 
 ## Overview
 
@@ -78,11 +78,11 @@ If the segmentation is empty (no voxels above the threshold), the script raises 
 
 **Mask** (`--mask emd_0407_msk_1.map`):
 
-![Alignment of EMD-0407 using its mask](volume_alignment_mask.png)
+<img src="volume_alignment_mask.png" width="400">
 
 **Threshold** (`--threshold 0.04`):
 
-![Alignment of EMD-0407 using a threshold](volume_alignment_threshold.png)
+<img src="volume_alignment_threshold.png" width="400">
 
 ## Technical overview
 
