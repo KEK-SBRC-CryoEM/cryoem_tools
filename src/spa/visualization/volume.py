@@ -16,10 +16,22 @@ def binary_to_grayscale(img):
     img_gray = img.astype(np.uint8) * 255
     return img_gray
 
-def show_slices(imgs_gray, spheres=None, title="", output_path=None):
-    plt.close('all')
+def show_slices(imgs_gray, spheres=None, title="", output_path=None, axs=None):
+    """
+    Plots the XY, XZ and YZ images of one volume, with optional sphere outlines.
+    If axs (a row of 3 axes) is given, draws into it and leaves the figure
+    (colorbar, title, saving) to the caller to enable combining figures.
+    """
+    create_new_figure = axs is None
+
     subtitles = ["XY", "XZ", "YZ"]
     indices = [(2,1), (2,0), (1,0)]
+
+    if create_new_figure:
+        plt.close('all')
+        fig, axs = plt.subplots(1, 3, figsize=(12, 4))
+    else:
+        fig = axs[0].figure
 
     # convert to rgb to enable drawing colored circles
     imgs_rgb = [cv.cvtColor(img, cv.COLOR_GRAY2RGB) for img in imgs_gray]
@@ -35,17 +47,16 @@ def show_slices(imgs_gray, spheres=None, title="", output_path=None):
             imgs_rgb[i] = cv.addWeighted(overlay, sphere["plot"]["alpha"], imgs_rgb[i], 1-sphere["plot"]["alpha"], 0)
 
     # plot images
-    fig, axs = plt.subplots(1, 3, figsize=(12, 4))
     for i in range(3):
         axs[i].imshow(imgs_rgb[i])
         axs[i].set_title(subtitles[i])
 
-    # colorbar
-    sm = plt.cm.ScalarMappable(cmap='gray', norm=plt.Normalize(vmin=0, vmax=255))
-    fig.colorbar(sm, ax=axs, orientation='vertical', fraction=0.02, pad=0.04)
-
-    fig.suptitle(title, fontsize=14)
-    if output_path:
-        plt.savefig(output_path, dpi=300, bbox_inches='tight')
+    if create_new_figure:
+        # colorbar
+        sm = plt.cm.ScalarMappable(cmap='gray', norm=plt.Normalize(vmin=0, vmax=255))
+        fig.colorbar(sm, ax=axs, orientation='vertical', fraction=0.02, pad=0.04)
+        fig.suptitle(title, fontsize=14)
+        if output_path:
+            plt.savefig(output_path, dpi=300, bbox_inches='tight')
 
     return fig

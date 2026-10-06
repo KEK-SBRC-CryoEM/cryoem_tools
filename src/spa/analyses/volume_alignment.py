@@ -4,6 +4,7 @@ import os
 import logging
 import argparse
 from pathlib import Path
+from matplotlib import pyplot as plt
 
 from spa import utils
 from spa import volume as volops
@@ -12,20 +13,29 @@ from spa.visualization import volume as visvol
 __myname__ = Path(__file__).stem
 logger = logging.getLogger(__myname__)
 
-def generate_figures(segmented, initial_sphere, aligned_sphere, output_path, title=""):
+def generate_figures(original_segmented, aligned_segmented, initial_sphere, aligned_sphere, output_path, titles=None):
     # define sphere coloring
     initial_sphere["plot"] = {"color": (255, 0, 0), "alpha": 1}
     aligned_sphere["plot"] = {"color": (0, 255, 0), "alpha": 1}
 
-    # possible an option in the future
-    #slices     = volops.get_orthogonal_slices(segmented)
-    # slices     = volops.get_summed_projection(segmented)
-    slices     = volops.get_max_projection(segmented)
-    maxv, minv = max(img.max() for img in slices), min(img.min() for img in slices)
-    imgs_gray  = [visvol.normalize_to_uint8(img, max_value=maxv, min_value=minv) for img in slices]
-    visvol.show_slices(imgs_gray, spheres=[initial_sphere, aligned_sphere], 
-                title=title, 
-                output_path=output_path)
+    # possible an option in the future: get_orthogonal_slices, get_summed_projection
+    slices_list = [volops.get_max_projection(seg) for seg in (original_segmented, aligned_segmented)]
+    maxv = max(img.max() for slices in slices_list for img in slices)
+    minv = min(img.min() for slices in slices_list for img in slices)
+
+    plt.close('all')
+    fig = plt.figure(figsize=(12, 8), layout="constrained")
+    sm  = plt.cm.ScalarMappable(cmap='gray', norm=plt.Normalize(vmin=0, vmax=255))
+    for subfig, slices, row_title in zip(fig.subfigures(2, 1), slices_list, titles):
+        axs = subfig.subplots(1, 3)
+        imgs_gray = [visvol.normalize_to_uint8(img, max_value=maxv, min_value=minv) for img in slices]
+        visvol.show_slices(imgs_gray, spheres=[initial_sphere, aligned_sphere], axs=axs)
+        subfig.suptitle(row_title, fontsize=12)
+        subfig.colorbar(sm, ax=axs, orientation='vertical', fraction=0.02, pad=0.04)
+
+    fig.savefig(output_path, dpi=300, bbox_inches='tight')
+
+    return fig
 
 def do_alignment(volume, mask, threshold):
     # 1. segmentation if mask is not provided
@@ -106,20 +116,13 @@ if __name__ == "__main__":
     # figures
     if args.save:
         logger.info("Generating figures...")
-        outp = os.path.join(args.output_path or ".", "original_view.png")
-        generate_figures(segmented      = mask if mask is not None else volops.binary_segmentation(volume, args.threshold),
-                         initial_sphere = alignment_data["initial_enclosing_sphere"], 
-                         aligned_sphere = alignment_data["aligned_enclosing_sphere"], 
-                         title          = "Original View (Orthogonal Slices)",
-                         output_path    = outp)
-
-
         outp = os.path.join(args.output_path or ".", "orthogonal_view.png")
-        generate_figures(segmented      = alignment_data["mask"],
-                         initial_sphere = alignment_data["initial_enclosing_sphere"], 
-                         aligned_sphere = alignment_data["aligned_enclosing_sphere"], 
-                         title          = "Aligned and Centered Volume (Orthogonal Slices)",
-                         output_path    = outp)
+        generate_figures(original_segmented = mask if mask is not None else volops.binary_segmentation(volume, args.threshold),
+                         aligned_segmented  = alignment_data["mask"],
+                         initial_sphere     = alignment_data["initial_enclosing_sphere"], 
+                         aligned_sphere     = alignment_data["aligned_enclosing_sphere"], 
+                         titles             = ["Original View (Max Projections)", "Aligned and Centered Volume (Max Projections)"],
+                         output_path        = outp)
         logger.info(f"+ saved to {outp}")
 
     # print and save output
