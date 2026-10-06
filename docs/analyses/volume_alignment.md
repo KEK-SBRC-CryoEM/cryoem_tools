@@ -1,6 +1,6 @@
 # Volume Alignment
 
-Align a cryo-EM volume (`.mrc`) to the box orthogonal axes based on its shape: the longest dimension of the particle along X, the middle one along Y, and the shortest along Z. Looking down Z, which is the default view in ChimeraX, shows the particle's largest view.
+Standardizes the pose of a cryo-EM volume (`.mrc`) to the box orthogonal axes based on its shape: the longest dimension of the particle along X, the middle one along Y, and the shortest along Z. Looking down Z, which is the default view in ChimeraX, shows the particle's largest view.
 
 ## Overview
 
@@ -68,9 +68,21 @@ Written to `<output-dir>/volume_alignment/`:
 | --- | --- |
 | `aligned_<volume>.mrc` | The aligned volume. |
 | `aligned_<mask>.mrc`   | The segmentation, aligned with the same transform. |
-| `orthogonal_view.png`  | Orthogonal slices of the aligned volume (with `--save`). |
+| `orthogonal_view.png`  | Maximum projections of the segmentation before and after alignment (with `--save`). |
 
-If the segmentation is empty (no voxels above the threshold), the script raises an error. Please check if the input threshold value.
+If the segmentation is empty (no voxels above the threshold), the script raises an error; check that the threshold lies within the volume's density range.
+
+### Example
+
+[EMD-0407](https://www.ebi.ac.uk/emdb/EMD-0407) (human methemoglobin, 2.8 Å; Herzik et al., 2019), aligned with its deposited mask and with a threshold. In each figure, the top row shows the segmentation before alignment and the bottom row after. The red circle is the enclosing sphere before alignment, and the green circle after.
+
+**Mask** (`--mask emd_0407_msk_1.map`):
+
+![Alignment of EMD-0407 using its mask](volume_alignment_mask.png)
+
+**Threshold** (`--threshold 0.04`):
+
+![Alignment of EMD-0407 using a threshold](volume_alignment_threshold.png)
 
 ## Technical overview
 
