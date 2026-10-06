@@ -21,3 +21,4 @@ pip install -e .
 
 # Usage guide
 - [**Find Binning Factor**](/docs/analyses/find_binning_factor.md): Find candidate binning factors with good FFT-box compatibility and with the least number of decimal places in the associated binned pixel size.
+- [**Volume Alignment**](/docs/analyses/volume_alignment.md): Align a `.mrc` volume to the orthogonal axes so the longest view is on the XY plane (view from Z) and the shortest view on YZ (view from X).
