@@ -74,7 +74,9 @@ def init_cli(name:str, parser:argparse.ArgumentParser) -> argparse.Namespace:
     args = parser.parse_args()
 
     # directory creation (extends args)
-    args.output_path = utils.paths.mkdir_output(os.path.join(args.output_dir, name), mode=args.output_dir_suffix) # skip if args.output_dir is None
+    args.output_path = None
+    if args.output_dir: # skip if args.output_dir is None
+        args.output_path = utils.paths.mkdir_output(os.path.join(args.output_dir, name), mode=args.output_dir_suffix) 
 
     # logging
     utils.log.configure_logging(verbose=args.verbose, output_directory=args.output_path, capture_warnings=True)
