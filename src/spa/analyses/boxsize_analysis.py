@@ -17,7 +17,7 @@ from matplotlib.patches import Circle
 matplotlib.use('Agg') # prevents opening the gui
 
 from spa import utils
-from spa.physics.ctf import ctf_limit, phaseshift_ctf, phaseshift_ctf2d, ctf_delocalization_distance_A
+from spa.physics.ctf import ctf_limit, phaseshift_ctf, phaseshift_ctf2d, ctf_delocalization_distance_A, ctf_limit_sparx
 from spa.physics import relativistic_electron_wavelength_A    
 
 from pathlib import Path
@@ -57,12 +57,12 @@ def compute_ctf_limits_for_boxsizes(boxsize_list, pixel_size, voltage, defocus, 
     '''
 
     # Compute CTF Limit for all boxsizes
-    ctf_values = np.array([(*ctf_limit(boxsize          = v,
-                                       defocus          = defocus,
-                                       cs               = cs,
-                                       voltage          = voltage,
-                                       pixel_size       = pixel_size,
-                                       limit_resolution = limit_resolution), v) for v in boxsize_list])
+    ctf_values = np.array([(*ctf_limit_sparx(box_size     = v,
+                                       defocus_um         = defocus,
+                                       cs_mm              = cs,
+                                       voltage_kV         = voltage,
+                                       pixel_size_A       = pixel_size,
+                                       ), v) for v in boxsize_list])
 
 
     ctf_values[:,1] = 1/ctf_values[:,1]
