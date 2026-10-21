@@ -4,6 +4,7 @@
 #       eg: projection, segmentation, sphere, alignment
 
 from .volume import (
+    get_max_projection,
     get_summed_projection,
     get_mean_projection,
     get_orthogonal_slices,
@@ -18,10 +19,12 @@ from .volume import (
     get_center,
     apply_transform,
     compute_principal_axes,
+    compute_axes_directions,
     covariance_alignment,
 )
 
 __all__ = [
+    "get_max_projection",
     "get_summed_projection",
     "get_mean_projection",
     "get_orthogonal_slices",
@@ -36,5 +39,6 @@ __all__ = [
     "get_center",
     "apply_transform",
     "compute_principal_axes",
+    "compute_axes_directions",
     "covariance_alignment",
 ]
