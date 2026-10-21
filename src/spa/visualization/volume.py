@@ -48,7 +48,7 @@ def show_slices(imgs_gray, spheres=None, title="", output_path=None, axs=None):
 
     # plot images
     for i in range(3):
-        axs[i].imshow(imgs_rgb[i])
+        axs[i].imshow(imgs_rgb[i], origin="lower")
         axs[i].set_title(subtitles[i])
 
     if create_new_figure:
