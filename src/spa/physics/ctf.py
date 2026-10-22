@@ -11,6 +11,22 @@ logger = logging.getLogger(__myname__)
 from spa import utils
 from spa import physics
 
+def delocalization_width_A(frequency, lambda_A, defocus_A, cs_A):
+    frequency = np.asarray(frequency, float)
+    return np.abs(lambda_A * frequency * (defocus_A - cs_A * lambda_A**2 * frequency**2))
+
+def delocalization_max_width_A(frequency_target, lambda_A, defocus_A, cs_A):
+    if defocus_A <= 0:
+        return float(delocalization_width_A(frequency_target, lambda_A, defocus_A, cs_A))
+    f0 = np.sqrt(defocus_A / (cs_A * lambda_A**2))
+    cand = [min(frequency_target, f0 / np.sqrt(3))] + ([frequency_target] if frequency_target > f0 else [])
+    return float(np.max(delocalization_width_A(np.array(cand), lambda_A, defocus_A, cs_A)))
+
+def box_delocalization(frequency_target, particle_diameter_A, lambda_A, defocus_A, cs_A, pixel_size_A):
+    R = delocalization_max_width_A(frequency_target, lambda_A, defocus_A, cs_A)
+    return int(np.round((particle_diameter_A + 2*R)/pixel_size_A))
+
+
 def ctf_delocalization_distance_A(particle_diameter_A:float, lambda_A:float, resolution_A:float, defocus_A:float) -> float:
     """
     Calculate the physical distance required to capture "Fresnel fringes"
