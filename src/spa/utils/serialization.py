@@ -16,18 +16,21 @@ def load_yaml(filepath):
 class YAMLDumper(yaml.SafeDumper):
     @classmethod
     def setup(cls):
-        cls.add_representer(
+        cls.add_multi_representer(
             np.integer,
             lambda dumper, x: dumper.represent_int(x.item()))
-        cls.add_representer(
+        cls.add_multi_representer(
             np.floating,
             lambda dumper, x: dumper.represent_float(x.item()))
-        cls.add_representer(
-            np.ndarray,
+        cls.add_multi_representer(
+            np.bool_,
+            lambda dumper, x: dumper.represent_bool(x.item()))
+        cls.add_multi_representer(
+            np.ndarray,    # also covers subclasses such as np.memmap
             lambda dumper, x: dumper.represent_sequence(
-            "tag:yaml.org,2002:seq",
-            x.tolist(),
-            flow_style=True))
+                "tag:yaml.org,2002:seq",
+                x.tolist(),
+                flow_style=True))
 
 #### JSON ####
 class JSONEncoder(json.JSONEncoder):
