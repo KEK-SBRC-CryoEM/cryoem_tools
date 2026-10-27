@@ -12,7 +12,7 @@ fi
 
 # list available scripts under /spa/analyses/
 usage() { 
-    echo "CSPA | usage: 'cspa <analysis> [options]'" 
+    echo "CSPA | INFO: 'cspa <analysis> [options]'" 
     echo "  or 'cspa <analysis> --help' for more details"
     echo "  Available Analyses:"
     for f in "$dir"/*.py; do
