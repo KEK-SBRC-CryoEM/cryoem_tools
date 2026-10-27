@@ -3,7 +3,7 @@ Python utilities for Cryogenic Electron Microscopy Single Particle Analysis.
 
 # Installation
 
-## Requirements
+**Requirements**
 - [conda](https://docs.conda.io)
 - git
 
@@ -20,6 +20,7 @@ conda activate cspa
 # Install the code as a package
 pip install -e .
 ```
+
 ## *(optional)* Environment module for cluster/HPC
 Expose `cspa` commands by `module load cspa`.
 - Required: [Environment Modules](https://modules.readthedocs.io).
@@ -32,7 +33,7 @@ Copy the template file into your `MODULEPATH` directory:
 cp /path/to/cryoem_tools/modulefiles/cspa_template /path/to/modulefiles/cspa
 ```
 
-Then edit the two paths at the top (repository and python).
+Then edit the two paths at the top (repository and python):
 
 ```tcl
 set root   /path/to/cryoem_tools
@@ -55,7 +56,7 @@ module load cspa
 cspa --help
 ```
 
-The module provides three commands, with tab completion for `cspa` in bash:
+This module provides three commands, with tab completion for `cspa` in bash:
 - `cspa <analysis> [options]`: run an analysis (`cspa` alone lists them);
 - `cspa-python`: python of the `cspa` environment; and
 - `cspa-viewer <path/to/image>`: a simple image viewer for X11 forwarding (`ssh -X`).
