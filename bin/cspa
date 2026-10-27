@@ -1,0 +1,37 @@
+#!/bin/bash
+# Provide the namespace 'cspa' and a general wrapper for our python scripts
+
+dir="${CSPA_ROOT:-}/src/spa/analyses"
+
+# guard if module is not loaded
+if [[ -z ${CSPA_PYTHON:-} || ! -d $dir ]]; then
+    echo "CSPA | ERROR: CSPA environment variables not found." >&2
+    echo "  Did you load the 'cspa' module?" >&2
+    exit 1
+fi
+
+# list available scripts under /spa/analyses/
+usage() { 
+    echo "CSPA | usage: 'cspa <analysis> [options]'" 
+    echo "  or 'cspa <analysis> --help' for more details"
+    echo "  Available Analyses:"
+    for f in "$dir"/*.py; do
+        f=${f##*/}; f=${f%.py}
+        [[ $f == _* ]] || echo "    $f" # ignore _*.py, __init__
+    done
+}
+
+case ${1:-} in # print the available scripts if user types:
+    ""|-h|--help) usage; exit 0;;  #cspa, cspa -h, cspa --help
+esac
+
+# check if provided name is valid 
+name=$1; shift
+script="$dir/$name.py"
+if [[ $name == _* || $name == */* || ! -f $script ]]; then
+    echo "CSPA | ERROR: '$name' is not an analysis. Run 'cspa' to list all available commands." >&2
+    exit 2
+fi
+
+# call script when user provides its name
+exec "$CSPA_PYTHON" "$script" "$@"
