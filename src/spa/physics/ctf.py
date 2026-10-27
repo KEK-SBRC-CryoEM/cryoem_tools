@@ -10,6 +10,7 @@ logger = logging.getLogger(__myname__)
 
 from spa import utils
 from spa import physics
+from spa import box
 
 def delocalization_width_A(frequency, lambda_A, defocus_A, cs_A):
     frequency = np.asarray(frequency, float)
@@ -24,7 +25,8 @@ def delocalization_max_width_A(frequency_target, lambda_A, defocus_A, cs_A):
 
 def box_delocalization(frequency_target, particle_diameter_A, lambda_A, defocus_A, cs_A, pixel_size_A):
     R = delocalization_max_width_A(frequency_target, lambda_A, defocus_A, cs_A)
-    return int(np.round((particle_diameter_A + 2*R)/pixel_size_A))
+    result = (particle_diameter_A + 2*R)/pixel_size_A # 2R+D
+    return box.round_up_to_even(result)
 
 
 def ctf_delocalization_distance_A(particle_diameter_A:float, lambda_A:float, resolution_A:float, defocus_A:float) -> float:
