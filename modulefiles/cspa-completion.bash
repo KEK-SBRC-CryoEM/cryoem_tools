@@ -19,4 +19,5 @@ _cspa_completions(){
     COMPREPLY=($(compgen -W "$names" -- "${COMP_WORDS[1]}"))
 }
 
-complete -F _cspa_completions cspa
+# enable default completion as fallback (for paths and variables)
+complete  -o bashdefault -o default -F _cspa_completions cspa
