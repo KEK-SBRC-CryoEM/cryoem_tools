@@ -118,7 +118,7 @@ def ctf_limit(box_size:int, pixel_size_A:float, voltage_kV:float, defocus_A:floa
         - Fix off-by-one error 
         - Scan upwards due to non-monotonicity on the ctf_period(frequency)
     """
-    logger.info("")
+    logger.info("Fixed version based on the SPARX implementation.")
     logger.info(f"CTF Limit calculation using boxsize={box_size}, pixel_size={pixel_size_A}, defocus={defocus_A}, cs={cs_A}, voltage={voltage_kV}")
 
     # 1. Number of unique frequency bins (from 0 to Nyquist)
@@ -154,7 +154,7 @@ def ctf_limit(box_size:int, pixel_size_A:float, voltage_kV:float, defocus_A:floa
                                         defocus_A = defocus_A,
                                         cs_A      = cs_A,
                                         lambda_A  = lambda_A) # [Å⁻¹]
-        logger.info(f"\tCTF period: {current_ctf_period}[Å⁻¹] >= {min_ctf_period}[Å⁻¹]? {current_ctf_period >= min_ctf_period}")
+        # logger.info(f"\tCTF period: {current_ctf_period}[Å⁻¹] >= {min_ctf_period}[Å⁻¹]? {current_ctf_period >= min_ctf_period}")
 
         # 6c. When the CTF period exceeds the allowed sampling window, return the previous bin
         if current_ctf_period < min_ctf_period:
@@ -227,7 +227,7 @@ def ctf_limit_sparx(box_size:int, pixel_size_A:float, voltage_kV:float, defocus_
 
         # 6b. Compute CTF period in fourier space  
         current_ctf_period = partial_ctf_period(frequency=spatial_frequency) # [Å⁻¹]
-        logger.info(f"\tCTF period: {current_ctf_period}[Å⁻¹] > {min_ctf_period}[Å⁻¹]? {current_ctf_period > min_ctf_period}")
+        # logger.info(f"\tCTF period: {current_ctf_period}[Å⁻¹] > {min_ctf_period}[Å⁻¹]? {current_ctf_period > min_ctf_period}")
 
         # 6c. If the CTF period exceeds the allowed sampling window
         if current_ctf_period > min_ctf_period:
