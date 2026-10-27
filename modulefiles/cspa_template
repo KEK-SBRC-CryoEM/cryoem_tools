@@ -1,0 +1,11 @@
+#%Module
+# This is a template file
+# TODO: Copy it into a directory on your MODULEPATH as "cspa" and set the two paths below:
+set root   /path/to/cryoem_tools # installation path
+set python /path/to/envs/cspa/bin/python # cspa python installation path
+
+module-whatis "Cryo-EM SPA Toolkit"
+
+setenv CSPA_ROOT   $root
+setenv CSPA_PYTHON $python
+prepend-path PATH $root/bin # expose wrappers and utilities
