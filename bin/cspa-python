@@ -1,7 +1,10 @@
 #!/usr/bin/env bash
-if [ -z "$CSPA_PYTHON" ] || [ -z "$CSPA_ROOT" ]; then
+
+# guard if module is not loaded
+if [[ -z ${CSPA_PYTHON:-} || ! -d $dir ]]; then
     echo "CSPA | ERROR: CSPA environment variables not found." >&2
     echo "  Did you load the 'cspa' module?" >&2
     exit 1
 fi
+
 exec "$CSPA_PYTHON" "$@"
