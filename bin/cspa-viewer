@@ -6,4 +6,4 @@ if [[ -z ${CSPA_PYTHON:-} || -z ${CSPA_ROOT:-} ]]; then
     exit 1
 fi
 
-exec "$CSPA_PYTHON" "$CSPA_ROOT/bin/viewer.py" "$@"
+exec "$CSPA_PYTHON" "$CSPA_ROOT/tools/viewer.py" "$@"
