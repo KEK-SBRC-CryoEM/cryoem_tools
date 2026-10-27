@@ -6,30 +6,27 @@ from pathlib import Path
 
 from spa import utils
 from spa.physics import relativistic_electron_wavelength_A
-from spa.physics.ctf import ctf_limit, delocalization_max_width_A, box_delocalization
+from spa.physics.ctf import ctf_limit, box_delocalization
 
 __myname__ = Path(__file__).stem 
 logger     = logging.getLogger(__myname__)
 
 if __name__ == "__main__":
     # python src/spa/analyses/size_matters.py -m ctf -b 480 -p 0.5585 -k 200 -d 1.7 -c 2.7           # 2.764 A
-    # python src/spa/analyses/size_matters.py -m delocalization -r 2.7 -k 200 -d 1.7 -c 2.7          # R = 136.27 A
-    # python src/spa/analyses/size_matters.py -m box -D 76 -r 2.7 -p 0.5585 -k 200 -d 1.7 -c 2.7     # 624 px
+    # python src/spa/analyses/size_matters.py -m deloc -D 76 -r 2.7 -p 0.5585 -k 200 -d 1.7 -c 2.7     # 624 px
     # python src/spa/analyses/size_matters.py -m all -b 480 -p 0.5585 -D 76 -r 2.7 -k 200 -d 1.7 -c 2.7 --output-dir test_/output/
     ########## CLI setup ##########
     MODES = { # mode: extra arguments it requires (all modes use --voltage, --defocus and --cs)
-        "ctf"          : ["box_size", "pixel_size"],      # ctf_limit
-        "delocalization" : ["resolution"],                # delocalization_max_width_A
-        "box"            : ["resolution", "pixel_size"],  # box_delocalization (--diameter optional, default 0)
+        "ctf"    : ["box_size", "pixel_size"],      # ctf_limit
+        "deloc"  : ["resolution", "pixel_size"],  # box_delocalization (--diameter optional, default 0)
     }
     parser = argparse.ArgumentParser(
         description=(
             "CTF limit and Delocalization extent. \n"
             "Select the --mode:\n"
-            "\t limit          : resolution [Å] before CTF aliasing\n"
-            "\t delocalization : max extent R [Å] of the delocalization for the target frequency (1/resolution)\n"
-            "\t box            : box size [px] from the derivative of the phase: (D + 2R) / pixel_size; D = 0 if unknown\n"
-            "\t all            : run all above\n"
+            "\t limit  : resolution [Å] before CTF aliasing\n"
+            "\t deloc  : box size [px] from the derivative of the phase: (D + 2R) / pixel_size; D = 0 if unknown\n"
+            "\t all    : run all above\n"
             "Defocus is given in [um] and positive for underfocus; Cs in [mm].\n"
             "Usage: \n"
             "\t python size_matters.py -m ctf -b 480 -p 0.5585 -k 200 -d 1.7\n"
@@ -79,16 +76,7 @@ if __name__ == "__main__":
         frequency = ctf_limit(box_size=args.box_size, pixel_size_A=args.pixel_size, voltage_kV=args.voltage, defocus_A=defocus_A, cs_A=cs_A)[1]
         result["output"]["ctf_limit_resolution_A"] = 1/frequency # resolution before aliasing
 
-    if "delocalization" in modes:
-        logger.info("Running delocalization_max_width_A...")
-        result["output"]["delocalization_max_width_A"] = delocalization_max_width_A( # R
-                frequency_target = 1/args.resolution,
-                lambda_A         = lambda_A,
-                defocus_A        = defocus_A,
-                cs_A             = cs_A
-        )
-
-    if "box" in modes:
+    if "deloc" in modes:
         logger.info("Running box_delocalization...")
         result["output"]["box_delocalization_px"] = box_delocalization( # (D+2R)/pixel_size
                 frequency_target    = 1/args.resolution,
