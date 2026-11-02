@@ -57,7 +57,7 @@ cspa --help
 ```
 
 This module provides three commands, with tab completion for `cspa` in bash:
-- `cspa <analysis> [options]`: run an analysis (`cspa` alone lists them);
+- `cspa <analysis> [options]`: run an analysis (`cspa` to list available analyses);
 - `cspa-python`: python of the `cspa` environment; and
 - `cspa-viewer <path/to/image>`: a simple image viewer for X11 forwarding (`ssh -X`).
 
