@@ -49,7 +49,7 @@ cd /path/to/cryoem_tools
 chmod +x bin/cspa bin/cspa-python bin/cspa-viewer
 ```
 
-**3. Check.**
+**3. Check**
 
 ```bash
 module load cspa
