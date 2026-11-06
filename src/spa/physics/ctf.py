@@ -17,14 +17,17 @@ def delocalization_width_A(frequency, lambda_A, defocus_A, cs_A):
     return np.abs(lambda_A * frequency * (defocus_A - cs_A * lambda_A**2 * frequency**2))
 
 def delocalization_max_width_A(frequency_target, lambda_A, defocus_A, cs_A):
-    if defocus_A <= 0:
-        return float(delocalization_width_A(frequency_target, lambda_A, defocus_A, cs_A))
-    f0 = np.sqrt(defocus_A / (cs_A * lambda_A**2))
-    cand = [min(frequency_target, f0 / np.sqrt(3))] + ([frequency_target] if frequency_target > f0 else [])
-    return float(np.max(delocalization_width_A(np.array(cand), lambda_A, defocus_A, cs_A)))
+    if defocus_A * cs_A <= 0: # no turning point (defocus or Cs is 0, or opposite signs) # !!: positive for underfocus
+        return float(delocalization_width_A(frequency_target, lambda_A, defocus_A, cs_A)), float(frequency_target)
+    f0   = np.sqrt(defocus_A / (cs_A * lambda_A**2)) # d(f0) = 0: Cs cancels the defocus shift
+    cand = np.array([min(frequency_target, f0 / np.sqrt(3))] + ([frequency_target] if frequency_target > f0 else []))
+
+    widths = delocalization_width_A(cand, lambda_A, defocus_A, cs_A)
+    i      = int(np.argmax(widths))
+    return float(widths[i]), float(cand[i])
 
 def box_delocalization(frequency_target, particle_diameter_A, lambda_A, defocus_A, cs_A, pixel_size_A):
-    R = delocalization_max_width_A(frequency_target, lambda_A, defocus_A, cs_A)
+    R, _ = delocalization_max_width_A(frequency_target, lambda_A, defocus_A, cs_A)
     result = (particle_diameter_A + 2*R)/pixel_size_A # 2R+D
     return box.round_up_to_even(result)
 
@@ -130,7 +133,8 @@ def ctf_limit(box_size:int, pixel_size_A:float, voltage_kV:float, defocus_A:floa
     # 2. Width of a frequency bin in fourier space [Å⁻¹]
     nyquist_frequency   = 1.0/(2*pixel_size_A)        # [Å⁻¹] maximum representable frequency for this pixel size
     frequency_bin_width = nyquist_frequency / (n_frequency_bins-1) # [Å⁻¹] # 1.0/(box_size*pixel_size) 
-    logger.info(f"Nyquist Frequency: {nyquist_frequency} [Å⁻¹]")
+    logger.info(f"Nyquist Frequency : {nyquist_frequency} [Å⁻¹]")
+    logger.info(f"Nyquist Resolution: {1/nyquist_frequency} [Å]")
     logger.info(f"Width of frequency bins in fourier space: {frequency_bin_width} [Å⁻¹]")
  
     # 3. Minimum CTF period representable by the bin width
@@ -156,7 +160,7 @@ def ctf_limit(box_size:int, pixel_size_A:float, voltage_kV:float, defocus_A:floa
                                         defocus_A = defocus_A,
                                         cs_A      = cs_A,
                                         lambda_A  = lambda_A) # [Å⁻¹]
-        # logger.info(f"\tCTF period: {current_ctf_period}[Å⁻¹] >= {min_ctf_period}[Å⁻¹]? {current_ctf_period >= min_ctf_period}")
+        logger.info(f"\tCTF period: {current_ctf_period}[Å⁻¹] >= {min_ctf_period}[Å⁻¹]? {current_ctf_period >= min_ctf_period}")
 
         # 6c. When the CTF period exceeds the allowed sampling window, return the previous bin
         if current_ctf_period < min_ctf_period:
@@ -166,9 +170,9 @@ def ctf_limit(box_size:int, pixel_size_A:float, voltage_kV:float, defocus_A:floa
             break # return (bin index, spatial frequency) at aliasing limit
 
     if found:
-        logger.info(f"Aliasing begins at bin #{bin_i}; highest alias-free frequency {frequency_result} [Å⁻¹] ({1/frequency_result:.2f} Å)")
+        logger.info(f"Aliasing begins at bin #{bin_i}; highest alias-free frequency {frequency_result} [Å⁻¹] ({1/frequency_result:.2f} [Å])")
     else:
-        logger.info(f"No aliasing up to Nyquist: {frequency_result} [Å⁻¹] ({1/frequency_result:.2f} Å)")
+        logger.info(f"No aliasing up to Nyquist: {frequency_result} [Å⁻¹] ({1/frequency_result:.2f} [Å])")
     logger.info("")
 
     return bin_result, frequency_result
