@@ -67,3 +67,4 @@ This module provides three commands, with tab completion for `cspa` in bash:
 # Usage guide
 - [**Find Binning Factor**](/docs/analyses/find_binning_factor.md): Find candidate binning factors with good FFT-box compatibility and with the least number of decimal places in the associated binned pixel size.
 - [**Volume Alignment**](/docs/analyses/volume_alignment.md): Standardizes the pose of a cryo-EM volume (`.mrc`) by aligning it to the orthogonal axes so the longest view is on the XY plane (view from Z) and the shortest view on YZ (view from X).
+- [**Calculate Extraction Box Size**](/docs/analyses/size_matters.md): Calculate the necessary box size to represent the CTF and/or include delocalized signal.
