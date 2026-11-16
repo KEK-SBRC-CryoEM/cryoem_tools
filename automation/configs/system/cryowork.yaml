@@ -27,7 +27,7 @@ system:
 
   ### extra tools ###
     python:
-      path: /lustre1/home/senda-em/.conda/envs/cspa/bin/python
+      path: /lustre1/emsystem/apps/pyenv/versions/anaconda3-5.3.1/envs/cspa/bin/python
       
     relion_image_handler:
       path: /lustre1/emsystem/apps/relion-5.0.0/bin/relion_image_handler
