@@ -1,29 +1,29 @@
 system:
   env:
     python_deepmasc    : /lustre1/home/senda-em/.conda/envs/DeepMASC/bin/python
-    python_cryoem_tools: /lustre1/home/senda-em/.conda/envs/cspa/bin/python
+    python_cryoem_tools: /lustre1/emsystem/apps/pyenv/versions/anaconda3-5.3.1/envs/cspa/bin/python
 
   toolbox:
     ### cryoem_tools analyses ###
     size_estimation:
       env : python_cryoem_tools
-      path: /lustre1/home/senda-em/emdata_senda-em/apps/cryoem_tools/src/spa/analyses/size_estimation.py
+      path: /lustre1/emsystem/apps/cryoem_tools/src/spa/analyses/size_estimation.py
 
     size_matters:
       env : python_cryoem_tools
-      path: /lustre1/home/senda-em/emdata_senda-em/apps/cryoem_tools/src/spa/analyses/size_matters.py
+      path: /lustre1/emsystem/apps/cryoem_tools/src/spa/analyses/size_matters.py
 
     find_binning_factor:
       env : python_cryoem_tools
-      path: /lustre1/home/senda-em/emdata_senda-em/apps/cryoem_tools/src/spa/analyses/find_binning_factor.py
+      path: /lustre1/emsystem/apps/cryoem_tools/src/spa/analyses/find_binning_factor.py
 
     volume_alignment:
       env : python_cryoem_tools
-      path: /lustre1/home/senda-em/emdata_senda-em/apps/cryoem_tools/src/spa/analyses/volume_alignment.py
+      path: /lustre1/emsystem/apps/cryoem_tools/src/spa/analyses/volume_alignment.py
 
     boxsize_analysis:
       env : python_cryoem_tools
-      path: /lustre1/home/senda-em/emdata_senda-em/apps/cryoem_tools/src/spa/analyses/boxsize_analysis.py
+      path: /lustre1/emsystem/apps/cryoem_tools/src/spa/analyses/boxsize_analysis.py
 
   ### extra tools ###
     python:
