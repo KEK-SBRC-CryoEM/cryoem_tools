@@ -304,12 +304,12 @@ if __name__ == "__main__":
 
     # save csv with all solutions in the pareto
     _view = history[history["pareto"]>0].sort_values(by=["count_compatible_boxes", "n_decimals_pixel", "d_resolution"], ascending=[False, True, True])
-    pareto_csv = pd.DataFrame({"binning_factor"         :_view["binning_factor"].astype(float),
-                               "binned_pixel_size"      :_view["binned_pixel_size"].astype(float),
-                               "target_resolution"      :_view["target_resolution"].astype(float),
-                               "compatibility_factors"  :_view["binning_factor"].apply(lambda b: numbers.prime_factors_to_str(numbers.prime_factorization(b.denominator))),
-                               "count_compatible_boxes" :_view["count_compatible_boxes"],
-                               "compatible_boxes"       :_view["mask_compatible_boxes"].apply(lambda m: fft_sizes_filtered[m]).to_list()
+    pareto_csv = pd.DataFrame({"binning_factor"            :_view["binning_factor"].astype(float),
+                               "binned_pixel_size_A_per_px":_view["binned_pixel_size"].astype(float),
+                               "target_resolution_A"       :_view["target_resolution"].astype(float),
+                               "compatibility_factors"     :_view["binning_factor"].apply(lambda b: numbers.prime_factors_to_str(numbers.prime_factorization(b.denominator))),
+                               "count_compatible_boxes"    :_view["count_compatible_boxes"],
+                               "compatible_boxes"          :_view["mask_compatible_boxes"].apply(lambda m: fft_sizes_filtered[m]).to_list()
     })
     logger.info("Recommended binning factor: ")
     result = {f"rank{i+1}":entry for i, entry in enumerate(pareto_csv.head(3).to_dict(orient="records"))} # "recors"->list of dicts, where each pd row is a dict

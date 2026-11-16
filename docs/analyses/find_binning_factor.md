@@ -13,31 +13,31 @@ The output is:
 ```YAML
 rank1:
   binning_factor: 4.75
-  binned_pixel_size: 2.652875
-  target_resolution: 7.958625
+  binned_pixel_size_A_per_px: 2.652875
+  target_resolution_A: 7.958625
   compatibility_factors: 2^2
   count_compatible_boxes: 41
   compatible_boxes: [64, 72, 96, 104, 112, 120, 128, 168, 192, 208, 216, 224, 240, 256, 288, 320, 352, 360, 384, 416, 440, 448, 480, 512, 560, 576, 600, 640, 648, 672, 720, 768, 784, 800, 840, 864, 896, 960, 1000, 1008, 1024]
 
 rank2:
   binning_factor: 4.8
-  binned_pixel_size: 2.6808
-  target_resolution: 8.0424
+  binned_pixel_size_A_per_px: 2.6808
+  target_resolution_A: 8.0424
   compatibility_factors: 5^1
   count_compatible_boxes: 27
   compatible_boxes: [100, 120, 140, 180, 220, 240, 260, 300, 320, 360, 440, 480, 540, 560, 600, 630, 640, 700, 720, 750, 800, 810, 840, 900, 960, 980, 1000]
 ```
 
-Where the suggestions are ordered first by `count_compatible_boxes`, and then by the number of decimal places in `binned_pixel_size`.
+Where the suggestions are ordered first by `count_compatible_boxes`, and then by the number of decimal places in `binned_pixel_size_A_per_px`.
 
 | Variable | Description |
-| :-------------------------- | :------------------------------------------------------------------------------- |
-|`binning_factor`             | The suggested binning factor                                                     |
-|`binned_pixel_size`          | The resulting pixel size after binning                                           |
-|`target_resolution`          | The actual resolution for this pixel size (which may account for oversampling)   |
-|`compatibility_factors`      | A box size must be divisible by this number to be compatible with the suggested binning factor (to result in an even integer box) |
-|`count_compatible_boxes`     | The number of FFT-friendly boxes that are compatible with this binning factor    |
-|`compatible_boxes`           | The specific FFT-friendly boxes that are compatible                              |
+| :--------------------------- | :------------------------------------------------------------------------------- |
+|`binning_factor`              | The suggested binning factor                                                     |
+|`binned_pixel_size_A_per_px`  | The resulting pixel size after binning                                           |
+|`target_resolution_A`         | The actual resolution for this pixel size (which may account for oversampling)   |
+|`compatibility_factors`       | A box size must be divisible by this number to be compatible with the suggested binning factor (to result in an even integer box) |
+|`count_compatible_boxes`      | The number of FFT-friendly boxes that are compatible with this binning factor    |
+|`compatible_boxes`            | The specific FFT-friendly boxes that are compatible                              |
 
 ## Usage
 
