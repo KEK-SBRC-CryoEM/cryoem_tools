@@ -36,7 +36,13 @@ def estimate_particle_size(volume, threshold, kernel_size=3, kernel_spherical=Tr
     logger.info(f"Finding the enclosed sphere...")
     coords = volops.get_coordinates(volume_processed)
     sphere = volops.compute_enclosing_sphere(coords)
-    return sphere
+
+    result = {"center_zyx_px": sphere["center"],
+              "radius_px"    : sphere["radius"],
+              "diameter_px"  : sphere["diameter"]
+    }
+
+    return result
 
 if __name__ == "__main__":
     # python src/spa/analyses/size_estimation.py -v test_/input/volume/emd_0407_mask_aligned.mrc   -s --output-dir test_/output/
@@ -59,25 +65,40 @@ if __name__ == "__main__":
     args = utils.cli.init_cli(__myname__, parser) # check the docstring for complete behavior; args.output_path is the resolved run directory
     ##### / #####
 
-    # computation
+    ### Computation ###
+    # 1. load volume/mask
     logger.info(f"Loading file: {args.volume}")
-    volume   = utils.mrc.load(args.volume)
+    volume     = utils.mrc.load(args.volume)
+    voxel_size = volume["voxel_size_A_per_px"][0]
 
+    # 2. estimate size in pixels
     logger.info(f"Running size estimation...")
-    result = estimate_particle_size(volume["data"], threshold=args.threshold)
-    
-    result["shape"] = volume["shape"][0]
-    result["voxel_size_A_per_px"] = volume["voxel_size_A_per_px"][0]
+    sphere = estimate_particle_size(volume["data"], threshold=args.threshold)
+
+    # 3. prepare output data
+    result = {# from inputs
+              "box_size_px": volume["shape"][0],
+              "pixel_size_A_per_px": voxel_size,
+              # enclosing sphere in pixels
+              "center_zyx_px": sphere["center_zyx_px"],
+              "radius_px"    : sphere["radius_px"],
+              "diameter_px"  : sphere["diameter_px"],
+              # in real space
+              "radius_A"     : sphere["radius_px"]   * voxel_size,
+              "diameter_A"   : sphere["diameter_px"] * voxel_size,
+              # mask filepath if --save
+              "mask_filepath": None,
+    }
     
     # save mask
     if args.save:
-        fname = f"mask_r{int(result['radius'])}.mrc"
+        fname = f"mask_r{int(result['radius_px'])}.mrc"
         fpath = os.path.join(args.output_path or ".", fname)
         logger.info(f"Saving mask to {fpath}")
         mask = volops.create_spherical_mask(
                 shape  = volume["data"].shape,
-                radius = result["radius"],
-                center = result["center"]
+                radius = result["radius_px"],
+                center = result["center_zyx_px"]
         )
         utils.mrc.save(volume=mask.astype(np.uint8), voxel_size=volume["voxel_size_A_per_px"], filename=fpath)
         result["mask_filepath"] = fpath
