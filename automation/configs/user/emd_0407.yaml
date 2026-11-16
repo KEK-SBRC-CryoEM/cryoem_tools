@@ -7,7 +7,7 @@ input:
         defocus          : 1.5 # [μm]
 
         ### binning factor ###
-        target_resolution_for_binning: 6 # [Å]
+        target_resolution: 6 # [Å]
 
     em_settings:
         EM_kV       : 200
