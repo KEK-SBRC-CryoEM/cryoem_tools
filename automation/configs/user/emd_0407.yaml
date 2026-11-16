@@ -1,0 +1,15 @@
+input:
+    user:
+        ### reference map ###
+        reference_map_filepath : inputs/reference_volume/emd_0407.map
+        
+        ### microscope related ###
+        defocus          : 1.5 # [μm]
+
+        ### binning factor ###
+        target_resolution_for_binning: 6 # [Å]
+
+    em_settings:
+        EM_kV       : 200
+        EM_mics_apix: 0.5585
+        EM_Cs       : 2.7

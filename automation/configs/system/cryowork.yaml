@@ -4,6 +4,28 @@ system:
     python_cryoem_tools: /lustre1/home/senda-em/.conda/envs/cspa/bin/python
 
   toolbox:
+    ### cryoem_tools analyses ###
+    size_estimation:
+      env : python_cryoem_tools
+      path: /lustre1/home/senda-em/emdata_senda-em/apps/cryoem_tools/src/spa/analyses/size_estimation.py
+
+    size_matters:
+      env : python_cryoem_tools
+      path: /lustre1/home/senda-em/emdata_senda-em/apps/cryoem_tools/src/spa/analyses/size_matters.py
+
+    find_binning_factor:
+      env : python_cryoem_tools
+      path: /lustre1/home/senda-em/emdata_senda-em/apps/cryoem_tools/src/spa/analyses/find_binning_factor.py
+
+    volume_alignment:
+      env : python_cryoem_tools
+      path: /lustre1/home/senda-em/emdata_senda-em/apps/cryoem_tools/src/spa/analyses/volume_alignment.py
+
+    boxsize_analysis:
+      env : python_cryoem_tools
+      path: /lustre1/home/senda-em/emdata_senda-em/apps/cryoem_tools/src/spa/analyses/boxsize_analysis.py
+
+  ### extra tools ###
     python:
       path: /lustre1/home/senda-em/.conda/envs/cspa/bin/python
       
@@ -13,27 +35,3 @@ system:
     deepmasc_contour: 
       env : python_deepmasc
       path: /lustre1/home/senda-em/emdata_senda-em/apps/DeepMASC/contour.py
-
-    size_estimation: 
-      env : python_cryoem_tools
-      path: /lustre1/home/senda-em/emdata_senda-em/apps/cryoem_tools/src/spa/analyses/size_estimation.py
-    
-    negative_estimation: 
-      env : python_cryoem_tools
-      path: /lustre1/home/senda-em/emdata_senda-em/apps/cryoem_tools/src/spa/analyses/negative_density.py
-
-    volume_alignment: 
-      env : python_cryoem_tools
-      path: /lustre1/home/senda-em/emdata_senda-em/apps/cryoem_tools/src/spa/analyses/volume_alignment.py
-
-    boxsize_analysis:
-      env : python_cryoem_tools
-      path: /lustre1/home/senda-em/emdata_senda-em/apps/cryoem_tools/src/spa/analyses/boxsize_analysis.py
-
-    binning_parameters:
-      env: python_cryoem_tools
-      path: /lustre1/home/senda-em/emdata_senda-em/apps/cryoem_tools/src/spa/analyses/binning_parameters.py
-
-    extract_boxes:
-      env: python_cryoem_tools
-      path: /lustre1/home/senda-em/emdata_senda-em/apps/cryoem_tools/src/spa/analyses/compute_extraction_boxes.py

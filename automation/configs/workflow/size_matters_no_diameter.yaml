@@ -1,0 +1,34 @@
+workflow:
+  # Binning factor and delocalization box, without a reference map: the box covers only the delocalization.
+  # Inputs (user config):
+  #   input.user       : defocus, target_resolution
+  #   input.em_settings: EM_kV, EM_mics_apix, EM_Cs
+  # With a reference map, use extraction_box_v0.yaml to add the particle diameter.
+  # Commands are the toolbox names in the system config (e.g. system/cryowork.yaml).
+
+  ### 1. BINNING ###
+  - name: calc_binning
+    command: find_binning_factor
+    args:
+      - "--pixel_size"       : {from: input.em_settings.EM_mics_apix}
+      - "--target_resolution": {from: input.user.target_resolution}
+      - "--json"
+      - "--verbose"
+  # output: rank1.binning_factor, rank1.binned_pixel_size_A_per_px, rank1.target_resolution_A (also rank2)
+
+  ### 2. DELOCALIZATION BOX ###
+  # resolution: the one reached at the binned pixel size (step 1)
+  # diameter  : 0, no particle diameter
+  - name: calc_deloc_box
+    command: size_matters
+    args:
+      - "--mode"      : "deloc"
+      - "--voltage"   : {from: input.em_settings.EM_kV}
+      - "--pixel_size": {from: input.em_settings.EM_mics_apix}
+      - "--defocus"   : {from: input.user.defocus}
+      - "--cs"        : {from: input.em_settings.EM_Cs}
+      - "--resolution": {from: workflow.calc_binning.output.rank1.target_resolution_A}
+      - "--diameter"  : 0
+      - "--json"
+      - "--verbose"
+  # output: output.delocalization_max_width_A, output.delocalization_box_px

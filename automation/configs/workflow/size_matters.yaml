@@ -1,0 +1,54 @@
+workflow:
+  # Particle size from a DeepMASC mask, binning factor and delocalization box.
+  # Inputs (user config):
+  #   input.user       : reference_map_filepath (optional), defocus, target_resolution
+  #   input.em_settings: EM_kV, EM_mics_apix, EM_Cs
+    # Commands are the toolbox names in the system config (e.g. system/cryowork.yaml).
+
+  ### 1. MASK OF THE REFERENCE MAP ###
+  - name: create_mask-reference_volume
+    command: deepmasc_contour
+    requires: input.user.reference_map_filepath
+    args:
+      - "--input_map_path": {from: input.user.reference_map_filepath}
+      - "--output_folder" : "$OUTDIR"
+      - "-a"
+      - "-p"
+      # output: $BASEDIR/create_mask-reference_volume/prot_mask_final.mrc
+
+  ### 2. PARTICLE SIZE ###
+  - name: calc_size-reference_volume
+    command: size_estimation
+    requires: input.user.reference_map_filepath
+    args:
+      - "--volume": "$BASEDIR/create_mask-reference_volume/prot_mask_final.mrc"
+      - "--json"
+      - "--verbose"
+  # output: diameter_A
+
+  ### 3. BINNING ###
+  - name: calc_binning
+    command: find_binning_factor
+    args:
+      - "--pixel_size"       : {from: input.em_settings.EM_mics_apix}
+      - "--target_resolution": {from: input.user.target_resolution}
+      - "--json"
+      - "--verbose"
+  # output: rank1.binning_factor, rank1.binned_pixel_size_A_per_px, rank1.target_resolution_A (also rank2)
+
+  ### 4. DELOCALIZATION BOX ###
+  # resolution: the one reached at the binned pixel size (step 3)
+  # diameter  : from step 2, or 0 without a reference map
+  - name: calc_deloc_box
+    command: size_matters
+    args:
+      - "--mode"      : "deloc"
+      - "--voltage"   : {from: input.em_settings.EM_kV}
+      - "--pixel_size": {from: input.em_settings.EM_mics_apix}
+      - "--defocus"   : {from: input.user.defocus}
+      - "--cs"        : {from: input.em_settings.EM_Cs}
+      - "--resolution": {from: workflow.calc_binning.output.rank1.target_resolution_A}
+      - "--diameter"  : {from: workflow.calc_size-reference_volume.output.diameter_A, default: 0}
+      - "--json"
+      - "--verbose"
+  # output: output.delocalization_max_width_A, output.delocalization_box_px
