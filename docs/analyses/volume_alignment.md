@@ -1,6 +1,6 @@
 # Volume Alignment
 
-Standardizes the pose of a cryo-EM volume (`.mrc`) by aligning it to the orthogonal axes so the longest view is on the XY plane (view from Z) and the shortest view on YZ (view from X). Looking down Z (default view in ChimeraX) shows the particle's largest view.
+Standardize the pose of a cryo-EM volume (`.mrc`) by aligning it to the orthogonal axes so the longest view is on the XY plane (view from Z) and the shortest view on YZ (view from X). Looking down Z (default view in ChimeraX) shows the particle's largest view.
 
 ## Overview
 
@@ -9,7 +9,7 @@ The user provides either:
 - a volume and a segmentation threshold; or
 - a volume and a binary mask (hard mask: 1 inside, 0 outside, no soft edge).
 
-The segmentation, from the threshold or the mask, defines the particle's shape. The script outputs the rotated and centered volume so that:
+The volume is segmented with the threshold, or the mask is used as the segmentation. Then, the coordinates of the segmented area determine the rotation matrix. The script outputs the rotated and centered volume so that:
 
 - **X** is the longest axis of the particle,
 - **Y** is the middle axis,
