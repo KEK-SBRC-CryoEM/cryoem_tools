@@ -105,7 +105,7 @@ if __name__ == "__main__":
     ### 5. POSTPROCESSING ###
     # save the enclosing sphere as a mask
     if args.save:
-        outputs["mask_filepath"] = os.path.join(args.output_path or ".", f"mask_r{int(outputs['radius_px'])}.mrc")
+        outputs["mask_filepath"] = os.path.join(args.output_path or ".", f"spherical_mask.mrc")
         logger.info(f"Saving mask to {outputs['mask_filepath']}")
         mask = volops.create_spherical_mask(shape  = volume.shape,
                                             radius = outputs["radius_px"],
