@@ -56,13 +56,14 @@ def process_system_settings(settings):
 
 def process_workflow_settings(settings):
     # from input file: workflow.{name, command,  command arg list}
-    # then we add workflow.{invocation, output_dir, output}
+    # then we add workflow.{invocation, output_dir, input, output}
     settings = {entry["name"]: {"command"       : entry["command"],
                                 "args"          : entry["args"],
                                 "postprocessing": entry.get("postprocessing", None),
                                 "invocation"    : None, # derived from command and args
                                 "output_dir"    : None, # basedir + name
-                                "output"        : None,
+                                "input"         : None, # if analyses: the input layer of their record
+                                "output"        : None, # if analyses: the output layer of their record; if external commands: stdout as is
                                 # "output_original": a copy of the original output if any postprocessing rule was applied
                                 }
                                                 for entry in settings}
@@ -231,7 +232,14 @@ def run(workflow_data, toolbox_settings, basedir, debug=False):
 
         ## 2.4 run
         logger.info(f"Running...")
-        entry["output"] = run_subprocess(name, entry["invocation"], entry["output_dir"])
+        output = run_subprocess(name, entry["invocation"], entry["output_dir"])
+
+        if isinstance(output, dict) and output.keys() == {"input", "output"}:
+            entry["input"]  = output["input"]
+            entry["output"] = output["output"]
+        else:
+            entry["output"] = output
+
         logger.info(f"+ Output: {entry['output']}")
 
         # 3. Postprocessing rules
