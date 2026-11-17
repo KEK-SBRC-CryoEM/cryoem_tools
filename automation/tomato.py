@@ -347,21 +347,15 @@ def css_run(css_settings, workflow_data, basedir, debug=False):
     return css_result
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(description="Run a workflow. Each run is saved to <output-dir>/tomato, with a suffix if it already exists.")
     parser.add_argument("-c", "--config_filepath_list", nargs='+', required=True, help="Path to one or more configuration files (yaml).")
     # alternatively receive user inputs from CLI
     parser.add_argument("-m",  "--reference_map",   type=str, help="Path to the reference map (mrc).")
     parser.add_argument("-k",  "--em_settings",     type=str, help="Path to the CS-Schemes EM Settings files (yaml).")
     parser.add_argument("-n",  "--sample_settings", type=str, help="Path to the CS-Schemes Sample Settings files (yaml).")
-    parser = utils.cli.add_common_arguments(parser) # adds --verbose, --json, --output-dir --debug
-    args = parser.parse_args()
-
-    # Directory creation
-    basedir = utils.paths.mkdir_output(args.output_dir or ".", mode="timestamp") # skip if args.output_dir is None
-    args.output_path = basedir # this script needs refactoring related to initial behavior/cli/argparse
-
-    # Logging
-    utils.log.configure_logging(verbose=args.verbose, output_directory=basedir, capture_warnings=True)
+    parser.set_defaults(save=True) # always writes files
+    args = utils.cli.init_cli(__myname__, parser) # check the docstring for complete behavior; args.output_path is the resolved run directory
+    basedir = args.output_path
 
     # Input files handling
     settings = load_settings(args.config_filepath_list)
