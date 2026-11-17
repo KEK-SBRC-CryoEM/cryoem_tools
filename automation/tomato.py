@@ -360,7 +360,6 @@ if __name__ == "__main__":
     # Input files handling
     settings = load_settings(args.config_filepath_list)
 
-    logger.info(__myname__.upper())
     # CLI handling
     if "input" not in settings.keys():
         settings["input"] = {"user": {}}
@@ -381,8 +380,6 @@ if __name__ == "__main__":
         logger.info("+ saves and updates pipeline_data.pkl during execution.")
         logger.info("+ shows error stack in case of an exception.")
         logger.info("-"*40)
-    logger.info(f"Output directory: {basedir}")
-    logger.info(f"Verbose: {args.verbose}")
     logger.info("-"*40)
     for i, f in enumerate(args.config_filepath_list):
         logger.info(f"Config file #{i+1}: {f}")
