@@ -59,9 +59,11 @@ def process_workflow_settings(settings):
     # then we add workflow.{invocation, output_dir, input, output}
     settings = {entry["name"]: {"command"       : entry["command"],
                                 "args"          : entry["args"],
+                                "requires"      : entry.get("requires", None), # list of paths that must be set to run the step
                                 "postprocessing": entry.get("postprocessing", None),
                                 "invocation"    : None, # derived from command and args
                                 "output_dir"    : None, # basedir + name
+                                "status"        : None, # "done" or "skipped"
                                 "input"         : None, # if analyses: the input layer of their record
                                 "output"        : None, # if analyses: the output layer of their record; if external commands: stdout as is
                                 # "output_original": a copy of the original output if any postprocessing rule was applied
@@ -201,11 +203,33 @@ def run_subprocess(name, invocation, output_directory=None):
         result = result.stdout
     return result
 
+def save_state(workflow_data, basedir, debug=False):
+    # save state data for debugging
+    if debug:
+        with open(os.path.join(basedir, "pipeline_data.pkl"), "wb") as file:
+            pickle.dump(workflow_data, file)
+
+    # save state data (future: this will be used to stop/continue the workflow)
+    _ = utils.output.print_and_save(workflow_data, 
+                                    print_as=None,
+                                    filepath=os.path.join(basedir, "pipeline_data") if basedir else None)
+
 def run(workflow_data, toolbox_settings, basedir, debug=False):
     # For each entry in the workflow
     for name, entry in workflow_data["workflow"].items():
         # 1. Prepare environment
         logger.info(f"{name.upper()}")
+
+        ## 1.0 skip a step when a required value is missing
+        requires = entry["requires"] or []
+        requires = [requires] if isinstance(requires, str) else requires
+        missing  = [path for path in requires if get_nested_value(path, workflow_data) is None]
+        if missing:
+            entry["status"] = "skipped"
+            logger.info(f"+ Step skipped. Missing: {', '.join(missing)}")
+            logger.info("-"*40)
+            save_state(workflow_data, basedir, debug)
+            continue
 
         ## 1.1 output directory path
         entry["output_dir"] = os.path.join(basedir, name)
@@ -266,18 +290,10 @@ def run(workflow_data, toolbox_settings, basedir, debug=False):
                 entry["output"][rule['target']] = method(**resolved_args)
                 logger.info(f"+ := {entry['output'][rule['target']]}")
 
+        entry["status"] = "done"
         logger.info("Done!")
         logger.info("-"*40)        
-
-        # save state data for debugging
-        if debug:
-            with open(os.path.join(basedir, "pipeline_data.pkl"), "wb") as file:
-                pickle.dump(workflow_data, file)
-
-        # save state data (future: this will be used to stop/continue the workflow)
-        _ = utils.output.print_and_save(workflow_data, 
-                                        print_as=None,
-                                        filepath=os.path.join(basedir, "pipeline_data") if basedir else None)
+        save_state(workflow_data, basedir, debug)
 
     return workflow_data
 
