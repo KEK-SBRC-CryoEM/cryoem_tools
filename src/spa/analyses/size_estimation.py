@@ -99,7 +99,7 @@ if __name__ == "__main__":
 
     ### 4. MAIN ###
     logger.info("Running size estimation...")
-    values, data = run(volume, inputs["threshold"], inputs["pixel_size_A_per_px"])
+    values, _ = run(volume, inputs["threshold"], inputs["pixel_size_A_per_px"])
     outputs.update(values)
 
     ### 5. POSTPROCESSING ###
