@@ -1,15 +1,17 @@
 ## temporary script for testing; need integration ##
 
 import os
+import sys
 import logging
 import argparse
 import subprocess
-from spa import utils
 import json
 import pickle
-import postprocessing_rules
 
 from pathlib import Path
+
+from spa import utils
+import postprocessing_rules
 
 ### usage examples ###
 # 1) all settings in one config yaml file
@@ -192,8 +194,8 @@ def run_subprocess(name, invocation, output_directory=None):
         result.check_returncode()
     except subprocess.CalledProcessError:
         logger.error(f"Pipeline Crashed while running {name.upper()} with return code {result.returncode}!!")
-        logger.error("+ Current analysis failed to run. Please, check its log file and the message below.")
-        # logger.error(f"{result.stderr}")
+        logger.error(f"+ Last line of its log: {(result.stderr.strip().splitlines() or ['(empty)'])[-1]}")
+        logger.error(f"+ Full log: {os.path.join(output_directory, 'run.log') if output_directory else '(not saved)'}")
         raise
 
     try: # parse output and return result
@@ -396,6 +398,7 @@ if __name__ == "__main__":
     logger.info("CS-Schemes Sample Settings: " + settings["input"]["user"].get("sample_settings_filepath", "None"))
     logger.info("-"*40)
 
+    exit_code = 0
     try:
         # prepare and run all analyses
         workflow_result = run(workflow_data    = process_user_inputs(settings["input"]) | process_workflow_settings(settings["workflow"]),
@@ -408,12 +411,14 @@ if __name__ == "__main__":
                                   workflow_data = workflow_result, 
                                   basedir       = basedir,
                                   debug         = args.debug)
-    except Exception:
+    except Exception as error:
         # if DEBUG: capture the error stack
-        logger.error("Pipeline Crashed!!".upper(), exc_info=args.debug)
+        logger.error(f"PIPELINE CRASHED!! {type(error).__name__}: {error}", exc_info=args.debug)
+        exit_code = 1
 
     logger.info(f"Exiting...")
     logger.info("-"*40)
+    sys.exit(exit_code)
 
 
 
