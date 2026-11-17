@@ -34,7 +34,7 @@ def get_fft_friendly_sizes(min_size:int|None=None, max_size:int|None=None,
     max_size : (optional) int
         Maximum box size to include.
     divisible_by : (optional) iterable of int
-        Keep sizes divisible by all specified values.
+        Keep sizes divisible by any of the specified values.
     """
     max_size = min([max_size if max_size else  np.inf, np.max(FFT_FRIENDLY_SIZES)])
     min_size = max([min_size if min_size else -np.inf, np.min(FFT_FRIENDLY_SIZES)])
