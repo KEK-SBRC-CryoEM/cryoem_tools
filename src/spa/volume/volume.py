@@ -198,6 +198,7 @@ def covariance_alignment(volume, binary_mask, center_mode="coordinates", order=3
     R = axes
     result = {"volume"  : apply_transform(volume,      R, pivot, order=order) if volume is not None else None,
               "mask"    : apply_transform(binary_mask, R, pivot, order=0),
+              "rotation": R,
               "eigvals" : eigvals,
               "eigvecs" : eigvecs,
               "skewness": skewness,
