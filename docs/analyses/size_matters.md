@@ -24,8 +24,8 @@ A box needs to:
 ## Usage
 
 ```bash
-python size_matters.py --mode ctf   --box_size <BOX_SIZE> --pixel_size <PIXEL_SIZE> --voltage <VOLTAGE> --defocus <DEFOCUS>
-python size_matters.py --mode deloc --resolution <RESOLUTION> --pixel_size <PIXEL_SIZE> --voltage <VOLTAGE> --defocus <DEFOCUS> [--diameter <DIAMETER>]
+python size_matters.py --mode ctf   --box_size <BOX_SIZE> --pixel_size <PIXEL_SIZE> --voltage <VOLTAGE> --defocus <DEFOCUS> --cs <SPHERICAL_ABERRATION>
+python size_matters.py --mode deloc --resolution <RESOLUTION> --pixel_size <PIXEL_SIZE> --voltage <VOLTAGE> --defocus <DEFOCUS> --cs <SPHERICAL_ABERRATION> [--diameter <DIAMETER>]
 ```
 
 Examples:
@@ -37,7 +37,7 @@ python size_matters.py --mode ctf --voltage 200 --defocus 1.7 --cs 2.7 --pixel_s
 # Box size for 2.7 Å, particle diameter not known yet
 python size_matters.py --mode deloc --voltage 200 --defocus 1.7 --cs 2.7 --pixel_size 0.5585 --resolution 2.7
 
-# Box size for 2.7 Å and a 76 Å particle
+# Box size for 2.7 Å and a 80 Å particle
 python size_matters.py --mode deloc --voltage 200 --defocus 1.7 --cs 2.7 --pixel_size 0.5585 --resolution 2.7 --diameter 80
 
 # Both ctf and deloc methods
@@ -51,7 +51,7 @@ python size_matters.py --mode all --voltage 200 --defocus 1.7 --cs 2.7 --pixel_s
 | `--mode`       | `-m`  | `ctf`, `deloc` or `all`                    |
 | `--voltage`    | `-k`  | Acceleration voltage [kV]                  |
 | `--defocus`    | `-d`  | Defocus [µm], positive for underfocus      |
-| `--cs`         | `-c`  | Spherical aberration [mm] (default: `2.7`) |
+| `--cs`         | `-c`  | Spherical aberration [mm]                  |
 | `--pixel_size` | `-p`  | Pixel size [Å/px]                          |
 
 ### Arguments by mode
@@ -72,18 +72,27 @@ python size_matters.py --mode all --voltage 200 --defocus 1.7 --cs 2.7 --pixel_s
 | `--verbose`    | Enable verbose logging.       |
 | `--output-dir` | Specify a directory to enable saving the output. If not provided, results print to stdout and logs to stderr only. If provided, a subdirectory named `size_matters` will be created under this specified directory. If it already exists, a unique suffix is appended. |
 
-## Outputs
+## Output
 
 The results are printed to stdout, as YAML by default or as JSON with `--json`. With `--output-dir`, they are also written to `<output-dir>/size_matters/`:
 
-| Variable                             | Mode    | Description |
-| ------------------------------------ | ------- | --- |
-| `ctf_limit_resolution_A`             | `ctf`   | Highest resolution [Å] before the CTF aliases in the box |
-| `ctf_limit_frequency_per_A`          | `ctf`   | The same limit as a spatial frequency [Å⁻¹] |
-| `ctf_limit_fourier_bin`              | `ctf`   | Fourier pixel index, from 0 at the center to half the box size at Nyquist |
-| `delocalization_max_width_A`         | `deloc` | Largest delocalization R [Å] up to the target resolution: how far the signal shifts beyond the particle's edge |
-| `delocalization_max_frequency_per_A` | `deloc` | Spatial frequency [Å⁻¹] where R occurs: the target, or lower when spherical aberration starts to cancel the defocus shift |
-| `delocalization_box_px`              | `deloc` | Box size [px] that holds the particle plus its delocalized signal, rounded up to an even number |
+| Layer    | Variable                             | Mode    | Description |
+| -------- | ------------------------------------ | ------- | ----------- |
+| `input`  | `mode`                               |         | `ctf`, `deloc` or `all` (`--mode`) |
+| `input`  | `voltage_kV`                         |         | Acceleration voltage [kV] (`--voltage`) |
+| `input`  | `lambda_A`                           |         | Relativistic electron wavelength [Å], from the voltage |
+| `input`  | `defocus_um`                         |         | Defocus [µm] (`--defocus`) |
+| `input`  | `cs_mm`                              |         | Spherical aberration [mm] (`--cs`) |
+| `input`  | `pixel_size_A_per_px`                |         | Pixel size [Å/px] (`--pixel_size`) |
+| `input`  | `box_size_px`                        | `ctf`   | Box size [px] (`--box_size`) |
+| `input`  | `diameter_A`                         | `deloc` | Particle diameter [Å] (`--diameter`) |
+| `input`  | `resolution_A`                       | `deloc` | Target resolution [Å] (`--resolution`) |
+| `output` | `ctf_limit_resolution_A`             | `ctf`   | Highest resolution [Å] before the CTF aliases in the box |
+| `output` | `ctf_limit_frequency_per_A`          | `ctf`   | The same limit as a spatial frequency [Å⁻¹] |
+| `output` | `ctf_limit_fourier_bin`              | `ctf`   | Fourier pixel index, from 0 at the center to half the box size at Nyquist |
+| `output` | `delocalization_max_width_A`         | `deloc` | Largest delocalization R [Å] up to the target resolution: how far the signal shifts beyond the particle's edge |
+| `output` | `delocalization_max_frequency_per_A` | `deloc` | Spatial frequency [Å⁻¹] where R occurs: the target, or lower when spherical aberration starts to cancel the defocus shift |
+| `output` | `delocalization_box_px`              | `deloc` | Box size [px] that holds the particle plus its delocalized signal, rounded up to an even number |
 
 ### Example
 
@@ -93,14 +102,15 @@ python size_matters.py --mode all --voltage 200 --defocus 1.7 --cs 2.7 --pixel_s
 
 ```yaml
 input:
+  mode: all
   voltage_kV: 200.0
   lambda_A: 0.025078469648974467
   defocus_um: 1.7
   cs_mm: 2.7
+  pixel_size_A_per_px: 0.5585
   box_size_px: 480
-  pixel_size_A: 0.5585
-  particle_diameter_A: 80.0
-  target_resolution_A: 2.7
+  diameter_A: 80.0
+  resolution_A: 2.7
 output:
   ctf_limit_resolution_A: 2.7637113402061857
   ctf_limit_frequency_per_A: 0.3618322888689943
@@ -110,7 +120,7 @@ output:
   delocalization_box_px: 632
 ```
 
-For a 2.7 Å target, this 480 px box satisfies neither requirement: it samples the CTF only up to 2.76 Å (1), and the delocalized signal needs 626 px (2).
+For a 2.7 Å target, this 480 px box satisfies neither requirement: it samples the CTF only up to 2.76 Å (1), and the delocalized signal needs 632 px (2).
 
 ## Technical Overview
 todo

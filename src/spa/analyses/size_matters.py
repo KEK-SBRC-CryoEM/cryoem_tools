@@ -11,11 +11,44 @@ from spa.physics.ctf import ctf_limit, delocalization_max_width_A, box_delocaliz
 __myname__ = Path(__file__).stem 
 logger     = logging.getLogger(__myname__)
 
+def run(modes, voltage_kV, lambda_A, defocus_um, cs_mm, pixel_size_A_per_px, box_size_px, diameter_A, resolution_A):
+    defocus_A = defocus_um * 1e4 # [um] -> [Å]
+    cs_A      = cs_mm * 1e7      # [mm] -> [Å]
+    values    = {}
+
+    # 1. ctf: resolution before the CTF aliases in the box
+    if "ctf" in modes:
+        logger.info("Running ctf_limit (fixed version)...")
+        fourier_bin, frequency = ctf_limit(box_size=box_size_px, pixel_size_A=pixel_size_A_per_px, voltage_kV=voltage_kV, defocus_A=defocus_A, cs_A=cs_A)
+        values.update({"ctf_limit_resolution_A"   : 1/frequency, # resolution before aliasing
+                       "ctf_limit_frequency_per_A": frequency,
+                       "ctf_limit_fourier_bin"    : fourier_bin})
+
+    # 2. deloc: box that holds the particle plus its delocalized signal
+    if "deloc" in modes:
+        logger.info("Running box_delocalization...")
+        logger.info("Delocalization R(f) = |λ f (ΔZ - Cs λ² f²)|")
+        R, frequency_R = delocalization_max_width_A(frequency_target=1/resolution_A, lambda_A=lambda_A, defocus_A=defocus_A, cs_A=cs_A)
+        logger.info(f"R(f) for f up to 1/{resolution_A:g} Å = {1/resolution_A:.4f} Å⁻¹: R = {R:.2f} Å at {1/frequency_R:.2f} Å")
+        box_px = box_delocalization( # (D+2R)/pixel_size
+                frequency_target    = 1/resolution_A,
+                particle_diameter_A = diameter_A,
+                lambda_A            = lambda_A,
+                defocus_A           = defocus_A,
+                cs_A                = cs_A,
+                pixel_size_A        = pixel_size_A_per_px
+        )
+        logger.info(f"Box = (D + 2R) / pixel size = {box_px}")
+        values.update({"delocalization_max_width_A"        : R,
+                       "delocalization_max_frequency_per_A": frequency_R,
+                       "delocalization_box_px"             : box_px})
+
+    data = {}
+
+    return values, data
+
 if __name__ == "__main__":
-    # python src/spa/analyses/size_matters.py -m ctf -b 480 -p 0.5585 -k 200 -d 1.7 -c 2.7           # 2.764 A
-    # python src/spa/analyses/size_matters.py -m deloc -D 76 -r 2.7 -p 0.5585 -k 200 -d 1.7 -c 2.7     # 624 px
-    # python src/spa/analyses/size_matters.py -m all -b 480 -p 0.5585 -D 76 -r 2.7 -k 200 -d 1.7 -c 2.7 --output-dir test_/output/
-    ########## CLI setup ##########
+    ### 1. CLI setup ###
     MODES = { # mode: extra arguments it requires (all modes use --voltage, --defocus, --cs and --pixel_size)
         "ctf"    : ["box_size"],    # ctf_limit
         "deloc"  : ["resolution"],  # box_delocalization (--diameter optional, default 0)
@@ -51,64 +84,53 @@ if __name__ == "__main__":
     missing = sorted({arg for mode in modes for arg in MODES[mode] if getattr(args, arg) is None})
     if missing:
         parser.error(f"--mode {' '.join(modes)} also requires: " + ", ".join("--" + arg for arg in missing))
-    ##### / #####
 
-    # input / output organization
-    defocus_A = args.defocus * 1e4 # [um] -> [Å]
-    cs_A      = args.cs * 1e7      # [mm] -> [Å]
-    lambda_A  = relativistic_electron_wavelength_A(voltage_kV=args.voltage)
-    logger.info(f"Electron wavelength at {args.voltage:g} kV: {lambda_A:.5f} A")
-
-    result = {"input" : {}, # inputs and derived values
-              "output": {}} # computed values
-    
-    inputs = {"voltage_kV": args.voltage,
-              "lambda_A"  : lambda_A,
-              "defocus_um": args.defocus,
-              "cs_mm"     : args.cs,
-              "box_size_px": args.box_size, 
-              "pixel_size_A": args.pixel_size, 
-              "particle_diameter_A": args.diameter, 
-              "target_resolution_A": args.resolution,
+    ### 2. I/O DEFINITION ###
+    inputs  = {"mode"               : args.mode,
+               "voltage_kV"         : args.voltage,
+               "lambda_A"           : ..., # from the voltage
+               "defocus_um"         : args.defocus,
+               "cs_mm"              : args.cs,
+               "pixel_size_A_per_px": args.pixel_size,
+               "box_size_px"        : args.box_size   if "ctf"   in modes else None, # used only by ctf
+               "diameter_A"         : args.diameter   if "deloc" in modes else None, # used only by deloc
+               "resolution_A"       : args.resolution if "deloc" in modes else None, # used only by deloc
     }
-    result["input"].update({key: value for key, value in inputs.items() if value is not None}) # filter out Nones
+    outputs = {"ctf_limit_resolution_A"            : ... if "ctf"   in modes else None, # resolution before the CTF aliases in the box
+               "ctf_limit_frequency_per_A"         : ... if "ctf"   in modes else None,
+               "ctf_limit_fourier_bin"             : ... if "ctf"   in modes else None,
+               "delocalization_max_width_A"        : ... if "deloc" in modes else None, # R, up to the target resolution
+               "delocalization_max_frequency_per_A": ... if "deloc" in modes else None, # where R occurs
+               "delocalization_box_px"             : ... if "deloc" in modes else None, # (D + 2R) / pixel size, rounded up to even
+    }
 
-    if "ctf" in modes:
-        logger.info("Running ctf_limit (fixed version)...")
-        result_ctf = ctf_limit(box_size=args.box_size, pixel_size_A=args.pixel_size, voltage_kV=args.voltage, defocus_A=defocus_A, cs_A=cs_A)
-        result["output"]["ctf_limit_resolution_A"]    = 1/result_ctf[1] # resolution before aliasing
-        result["output"]["ctf_limit_frequency_per_A"] = result_ctf[1] 
-        result["output"]["ctf_limit_fourier_bin"]     = result_ctf[0]
+    ### 3. PREPROCESSING ###
+    inputs["lambda_A"] = relativistic_electron_wavelength_A(voltage_kV=inputs["voltage_kV"])
+    logger.info(f"Electron wavelength at {inputs['voltage_kV']:g} kV: {inputs['lambda_A']:.5f} Å")
 
-    if "deloc" in modes:
-        logger.info("Running box_delocalization...")
-        logger.info("Delocalization R(f) = |λ f (ΔZ - Cs λ² f²)|")
+    ### 4. MAIN ###
+    values, data = run(modes               = modes,
+                       voltage_kV          = inputs["voltage_kV"],
+                       lambda_A            = inputs["lambda_A"],
+                       defocus_um          = inputs["defocus_um"],
+                       cs_mm               = inputs["cs_mm"],
+                       pixel_size_A_per_px = inputs["pixel_size_A_per_px"],
+                       box_size_px         = inputs["box_size_px"],
+                       diameter_A          = inputs["diameter_A"],
+                       resolution_A        = inputs["resolution_A"])
+    outputs.update(values)
 
-        result_deloc = delocalization_max_width_A(frequency_target=1/args.resolution, lambda_A=lambda_A, defocus_A=defocus_A, cs_A=cs_A)
-        logger.info(f"R(f) for f up to 1/{args.resolution:g} Å = {1/args.resolution:.4f} Å⁻¹: R = {result_deloc[0]:.2f} Å at {1/result_deloc[1]:.2f} Å")
-        result["output"]["delocalization_max_width_A"]         = result_deloc[0]
-        result["output"]["delocalization_max_frequency_per_A"] = result_deloc[1]
-        result["output"]["delocalization_box_px"]              = box_delocalization( # (D+2R)/pixel_size
-                frequency_target    = 1/args.resolution,
-                particle_diameter_A = args.diameter,
-                lambda_A            = lambda_A,
-                defocus_A           = defocus_A,
-                cs_A                = cs_A,
-                pixel_size_A        = args.pixel_size
-        )
+    ### 5. POSTPROCESSING ###
+    # when running both modes: does the given box suit the target?
+    if inputs["mode"] == "all":
+        if outputs["ctf_limit_resolution_A"] > inputs["resolution_A"]:
+            logger.info(f"The {inputs['box_size_px']} px box aliases at {outputs['ctf_limit_resolution_A']:.2f} Å, before the {inputs['resolution_A']:g} Å target")
+        if outputs["delocalization_box_px"] > inputs["box_size_px"]:
+            logger.info(f"The {inputs['box_size_px']} px box is smaller than the {outputs['delocalization_box_px']} px needed for the delocalization at {inputs['resolution_A']:g} Å")
 
-        logger.info(f"Box = (D + 2R) / pixel size = {result['output']['delocalization_box_px']}")
-
-    if args.mode == "all": # both results: does the given box suit the target?
-        if result["output"]["ctf_limit_resolution_A"] > args.resolution:
-            logger.info(f"The {args.box_size} px box aliases at {result['output']['ctf_limit_resolution_A']:.2f} Å, before the {args.resolution:g} Å target")
-        if result["output"]["delocalization_box_px"] > args.box_size:
-            logger.info(f"The {args.box_size} px box is smaller than the {result['output']['delocalization_box_px']} px needed for the delocalization at {args.resolution:g} Å")
-
-    # print and save output
-    output = utils.output.print_and_save(result,
-                                         print_as="json" if args.json else "yaml",
-                                         filepath=os.path.join(args.output_path, __myname__) if args.output_path else None)
-    logger.info(f"Result:\n{output['yaml']}")
+    # save I/O
+    utils.output.print_and_save({"input":inputs, "output":outputs},
+                                print_as="json" if args.json else "yaml",
+                                filepath=os.path.join(args.output_path, __myname__) if args.output_path else None)
     logger.info("Exiting...")
     logger.info("-"*40)
