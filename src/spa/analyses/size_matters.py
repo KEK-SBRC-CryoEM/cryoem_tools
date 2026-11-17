@@ -39,11 +39,11 @@ if __name__ == "__main__":
     parser.add_argument("-m", "--mode",       required=True, choices=list(MODES) + ["all"], help="Computation to run (see above)")
     parser.add_argument("-k", "--voltage",    type=float, required=True, help="Acceleration voltage [kV]")
     parser.add_argument("-d", "--defocus",    type=float, required=True, help="Defocus [um]")
-    parser.add_argument("-c", "--cs",         type=float, required=True,   help="Spherical aberration [mm] (default: 2.7)")
-    parser.add_argument("-b", "--box_size",   type=int,   default=None,  help="Box size [px]. Required by limit.")
+    parser.add_argument("-c", "--cs",         type=float, required=True, help="Spherical aberration [mm]")
+    parser.add_argument("-b", "--box_size",   type=int,   default=None,  help="Box size [px]")
     parser.add_argument("-p", "--pixel_size", type=float, required=True, help="Pixel size [Å/px]")
-    parser.add_argument("-D", "--diameter",   type=float, default=0.0,   help="Particle diameter [Å] (default: 0). Used by box; with 0, the box covers only the delocalization (2R).")
-    parser.add_argument("-r", "--resolution", type=float, default=None,  help="Target resolution [Å], frequency_target = 1/resolution. Required by delocalization and box.")
+    parser.add_argument("-D", "--diameter",   type=float, default=0.0,   help="Particle diameter [Å] (default: 0)")
+    parser.add_argument("-r", "--resolution", type=float, default=None,  help="Target resolution [Å], frequency_target = 1/resolution")
 
     args = utils.cli.init_cli(__myname__, parser) # check the docstring for complete behavior; args.output_path is the resolved run directory
 
