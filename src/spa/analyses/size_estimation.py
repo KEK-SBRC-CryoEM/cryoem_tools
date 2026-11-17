@@ -44,10 +44,22 @@ def estimate_particle_size(volume, threshold, kernel_size=3, kernel_spherical=Tr
 
     return result
 
+def run(volume, threshold, pixel_size_A_per_px):
+    # 1. enclosing sphere of the segmented volume in pixels
+    sphere = estimate_particle_size(volume, threshold)
+
+    # 2. output organization
+    values = {"center_zyx_px": sphere["center_zyx_px"],
+              "radius_px"    : sphere["radius_px"],
+              "diameter_px"  : sphere["diameter_px"],
+              "radius_A"     : sphere["radius_px"]   * pixel_size_A_per_px,
+              "diameter_A"   : sphere["diameter_px"] * pixel_size_A_per_px}
+
+    data   = {} 
+    return values, data
+
 if __name__ == "__main__":
-    # python src/spa/analyses/size_estimation.py -v test_/input/volume/emd_0407_mask_aligned.mrc   -s --output-dir test_/output/
-    # python src/spa/analyses/size_estimation.py -v test_/input/volume/emd_0407_volume_aligned.map -t 0.008 -s --output-dir test_/output/
-    ########## CLI setup ##########
+    ### 1. CLI setup ###
     parser = argparse.ArgumentParser(
         description=(
             "Estimate the size of the positive density of a .mrc file, "
@@ -63,52 +75,50 @@ if __name__ == "__main__":
     parser.add_argument("-s", "--save",      action="store_true",     help="Save enclosing sphere as a mask file (.mrc)")
 
     args = utils.cli.init_cli(__myname__, parser) # check the docstring for complete behavior; args.output_path is the resolved run directory
-    ##### / #####
 
-    ### Computation ###
-    # 1. load volume/mask
-    logger.info(f"Loading file: {args.volume}")
-    volume     = utils.mrc.load(args.volume)
-    voxel_size = volume["voxel_size_A_per_px"][0]
-
-    # 2. estimate size in pixels
-    logger.info(f"Running size estimation...")
-    sphere = estimate_particle_size(volume["data"], threshold=args.threshold)
-
-    # 3. prepare output data
-    result = {# from inputs
-              "box_size_px": volume["shape"][0],
-              "pixel_size_A_per_px": voxel_size,
-              # enclosing sphere in pixels
-              "center_zyx_px": sphere["center_zyx_px"],
-              "radius_px"    : sphere["radius_px"],
-              "diameter_px"  : sphere["diameter_px"],
-              # in real space
-              "radius_A"     : sphere["radius_px"]   * voxel_size,
-              "diameter_A"   : sphere["diameter_px"] * voxel_size,
-              # mask filepath if --save
-              "mask_filepath": None,
+    ### 2. I/O DEFINITION ###
+    inputs  = {"volume_filepath"    : args.volume,
+               "threshold"          : args.threshold,
+               "box_size_px"        : ..., # from the volume header
+               "pixel_size_A_per_px": ..., # from the volume header
     }
-    
-    # save mask
-    if args.save:
-        fname = f"mask_r{int(result['radius_px'])}.mrc"
-        fpath = os.path.join(args.output_path or ".", fname)
-        logger.info(f"Saving mask to {fpath}")
-        mask = volops.create_spherical_mask(
-                shape  = volume["data"].shape,
-                radius = result["radius_px"],
-                center = result["center_zyx_px"]
-        )
-        utils.mrc.save(volume=mask.astype(np.uint8), voxel_size=volume["voxel_size_A_per_px"], filename=fpath)
-        result["mask_filepath"] = fpath
+    outputs = {"center_zyx_px": ...,  # sphere center, as array indices (z, y, x)
+               "radius_px"    : ...,
+               "diameter_px"  : ...,
+               "radius_A"     : ...,
+               "diameter_A"   : ...,  # the particle size
+               "mask_filepath": None, # only when --save
+    }
 
-    # print and save output
-    output = utils.output.print_and_save(result, 
-                                         print_as="json" if args.json else "yaml",
-                                         filepath=os.path.join(args.output_path, __myname__) if args.output_path else None)
-    logger.info(f"Result:\n{output['yaml']}")
-    logger.info(f"Exiting...")
+    ### 3. PREPROCESSING ###
+    logger.info(f"Loading file: {inputs['volume_filepath']}")
+    volume_mrc = utils.mrc.load(inputs["volume_filepath"])
+    volume     = volume_mrc["data"]
+    inputs["box_size_px"]         = volume.shape[0]
+    inputs["pixel_size_A_per_px"] = volume_mrc["voxel_size_A_per_px"][0]
+
+    ### 4. MAIN ###
+    logger.info("Running size estimation...")
+    values, data = run(volume, inputs["threshold"], inputs["pixel_size_A_per_px"])
+    outputs.update(values)
+
+    ### 5. POSTPROCESSING ###
+    # save the enclosing sphere as a mask
+    if args.save:
+        outputs["mask_filepath"] = os.path.join(args.output_path or ".", f"mask_r{int(outputs['radius_px'])}.mrc")
+        logger.info(f"Saving mask to {outputs['mask_filepath']}")
+        mask = volops.create_spherical_mask(shape  = volume.shape,
+                                            radius = outputs["radius_px"],
+                                            center = outputs["center_zyx_px"])
+        utils.mrc.save(volume     = mask.astype(np.uint8),
+                       voxel_size = volume_mrc["voxel_size_A_per_px"],
+                       filename   = outputs["mask_filepath"])
+    
+    # save I/O
+    utils.output.print_and_save({"input":inputs, "output":outputs},
+                                print_as="json" if args.json else "yaml",
+                                filepath=os.path.join(args.output_path, __myname__) if args.output_path else None)
+    logger.info("Exiting...")
     logger.info("-"*40)
     
 

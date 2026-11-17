@@ -52,16 +52,18 @@ python size_estimation.py --volume mask.mrc --save --output-dir results
 | `--verbose`    | Enable verbose logging.       |
 | `--output-dir` | Specify a directory to enable saving the output. If not provided, results print to stdout and logs to stderr only. If provided, a subdirectory named `size_estimation` will be created under this specified directory. If it already exists, a unique suffix is appended. |
 
-## Outputs
+## Output
 
-| Variable              | Description |
-| --------------------- | ----------- |
-| `box_size_px`         | Box size of the input [px] |
-| `pixel_size_A_per_px` | Pixel size of the input [Å/px], from the file header |
-| `center_zyx_px`       | Center of the sphere [px], as array indices in (z, y, x) order. |
-| `radius_px`           | Radius of the sphere [px] |
-| `diameter_px`         | Diameter of the sphere [px] |
-| `radius_A`            | Radius of the sphere [Å] |
-| `diameter_A`          | Diameter of the sphere [Å]: the estimated particle size |
-| `mask_filepath`       | Path of the sphere mask with `--save`, otherwise `null` |
+| Layer    | Variable              | Description |
+| -------- | --------------------- | ----------- |
+| `input`  | `volume_filepath`     | Volume or mask filepath (`--volume`) |
+| `input`  | `threshold`           | Segmentation threshold (`--threshold`) |
+| `input`  | `box_size_px`         | Box size of the input [px] |
+| `input`  | `pixel_size_A_per_px` | Pixel size of the input [Å/px], from the file header |
+| `output` | `center_zyx_px`       | Center of the sphere [px], as array indices in (z, y, x) order. |
+| `output` | `radius_px`           | Radius of the sphere [px] |
+| `output` | `diameter_px`         | Diameter of the sphere [px] |
+| `output` | `radius_A`            | Radius of the sphere [Å] |
+| `output` | `diameter_A`          | Diameter of the sphere [Å]: the estimated particle size |
+| `output` | `mask_filepath`       | Path of the sphere mask with `--save`, otherwise `null` |
 
