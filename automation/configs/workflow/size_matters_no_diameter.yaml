@@ -24,7 +24,7 @@ workflow:
     args:
       - "--mode"      : "deloc"
       - "--voltage"   : {from: input.em_settings.EM_kV}
-      - "--pixel_size": {from: input.em_settings.EM_mics_apix}
+      - "--pixel_size": {from: workflow.calc_binning.output.rank1.binned_pixel_size_A_per_px}
       - "--defocus"   : {from: input.user.defocus}
       - "--cs"        : {from: input.em_settings.EM_Cs}
       - "--resolution": {from: workflow.calc_binning.output.rank1.target_resolution_A}
