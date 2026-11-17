@@ -47,31 +47,33 @@ python find_binning_factor.py --pixel_size <PIXEL_SIZE> --target_resolution <TAR
 
 ### Required arguments
 
-| Argument                    | Description                    |
-| :-------------------------- | :----------------------------- |
-| `-p`, `--pixel_size`        | Current pixel size in Å/pixel. |
-| `-t`, `--target_resolution` | Target resolution in Å.        |
+| Argument              | Short | Description               |
+| --------------------- | ----- | ------------------------- |
+| `--pixel_size`        | `-p`  | Current pixel size [Å/px] |
+| `--target_resolution` | `-t`  | Target resolution [Å]     |
 
 ### Additional arguments
 
 | Argument       | Description                   |
 | -------------- | ----------------------------- |
+| `--json`       | Print the results as JSON instead of YAML. Useful for the automation pipeline. |
 | `--verbose`    | Enable verbose logging.       |
-| `--output-dir` | Specify a directory to enable saving the output. If not provided, results print to stdout and logs to stderr only. If provided, a subdirectory named `find_binning_factor` will be created under this specified directory. If it already exists, a unique suffix is appended. | 
+| `--debug`      | With `--output-dir`, also save every candidate of the search (`history.csv`). |
+| `--output-dir` | Specify a directory to enable saving the output. If not provided, results print to stdout and logs to stderr only. If provided, a subdirectory named `find_binning_factor` will be created under this specified directory. If it already exists, a unique suffix is appended. |
 
 ### Advanced arguments
 
 The defaults for these parameters below are carefully tuned for general use. 
 Feel free to experiment with them using the details below.
 
-| Argument                               | Default | Description                                                                                          |
-| :------------------------------------- | :-----: | :----------------------------------------------------------------------------------------------------|
-| `--sampling_ratio`                     | `3`   | The ratio $R=target\_resolution/pixel\_size$. Higher values give more sampling margin but require finer pixels. Nyquist limit: $2$, Oversampling: $>2$. |
-| `--resolution_tolerance`               | `0.2` | Acceptable tolerance from the target resolution in Å.                                                |
-| `--pixel_max_decimals`                 | `6`   | Maximum number of decimal places allowed for the binned pixel size.                                  |
-| `-lb`, `--compatible-box-min-size`     | `64`  | Minimum FFT-friendly box size considered for compatibility (filters the FFT-friendly box list).                 |
-| `-ub`, `--compatible-box-max-size`     | `512` | Maximum FFT-friendly box size considered for compatibility (filters the FFT-friendly box list).                 |
-| `-db`, `--compatible-box-divisible-by` | `(2, 4, 5, 8, 10)` | Only consider FFT-friendly boxes that are divisible by any of the input values. Multiple values can be provided (filters the FFT-friendly box list). |
+| Argument                        | Short | Default      | Description |
+| ------------------------------- | ----- | ------------ | ----------- |
+| `--sampling_ratio`              |       | `3`          | The ratio $R=target\_resolution/pixel\_size$. Higher values give more sampling margin but require finer pixels. Nyquist limit: $2$, Oversampling: $>2$. |
+| `--resolution_tolerance`        |       | `0.2`        | Acceptable tolerance from the target resolution [Å]. |
+| `--pixel_max_decimals`          |       | `6`          | Maximum number of decimal places allowed for the binned pixel size. |
+| `--compatible-box-min-size`     | `-lb` | `64`         | Minimum FFT-friendly box size considered for compatibility [px] (filters the FFT-friendly box list). |
+| `--compatible-box-max-size`     | `-ub` | `512`       | Maximum FFT-friendly box size considered for compatibility [px] (filters the FFT-friendly box list). |
+| `--compatible-box-divisible-by` | `-db` | `2 4 5 8 10` | Only consider FFT-friendly boxes that are divisible by any of the input values. Multiple values can be provided, separated by spaces (filters the FFT-friendly box list). |
 
 ## Technical overview
 ### Search Grid
@@ -109,7 +111,7 @@ Then, we actively filter out candidate binning factors that:
 For compatibility, a binning factor is expressed as an irreducible fraction $b = \frac{c}{d}$. where $c$ is the numerator and $d$ the denominator. A box of size $N$ is compatible with $b$ if $N \text{ modulo } d = 0$, making the product $Nb$ integer. 
 
 ### Evaluation & Dominance
-Each candidate solution (the pixel size and its binning factor) is evaluated in order of importance by:
+Each candidate solution (the pixel size and its binning factor) is evaluated by:
 1. The number of decimal places in the pixel size (lower is better).
 2. The number of compatible FFT-friendly box boxes (higher is better).
 

@@ -227,129 +227,156 @@ def find_binning_parameters(target_resolution_A, pixel_size_A_per_pixel, samplin
     
     return history
 
+def generate_figures(history, target_resolution_A, output_path):
+    # adjust dataframe
+    toplot = history.rename(columns={"d_resolution": "obj1", "n_decimals_pixel": "obj2"})
+    sign   = np.where(toplot["is_worse_than_target"], 1, -1)   # obj1 is just the magnitude,
+    toplot["obj1"] = target_resolution_A + sign*toplot["obj1"] # lets plot the actual resolution
+
+    # plot
+    plot_pareto(toplot, all_solutions=True, feasible_solutions=True,
+            y_label                  = "Number of decimals in the Binned Pixel Size",
+            x_label                  = "Actual Target Resolution",
+            title_str                = f"Target Resolution: {target_resolution_A} Å",
+            legend_str               = "Candidate Solutions",
+            all_solutions_label      = "Not Feasible", # "unfeasible"
+            feasible_solutions_label = "Dominated",
+            pareto_labels            = ["Differ in box compatibility"],
+            pareto_annotations       = history[history["pareto"]>0]["binning_factor"].to_dict(),
+            filepath                 = output_path
+    )
+
+def run(pixel_size_A_per_px, target_resolution_A, sampling_ratio, resolution_tolerance_A, pixel_max_decimals, fft_box_sizes_px):
+    # 1. exhaustive search (everything as fractions to minimize float related problems)
+    logger.info("Exhaustive evaluation of binning parameters...")
+    history = find_binning_parameters(target_resolution_A        = Fraction(str(target_resolution_A)),
+                                      pixel_size_A_per_pixel     = Fraction(str(pixel_size_A_per_px)),
+                                      sampling_ratio             = Fraction(str(sampling_ratio)),
+                                      evaluation_boxes           = fft_box_sizes_px,
+                                      evaluation_feasible_primes = (2, 3, 5, 7, 11, 13),
+                                      grid_step                  = Fraction(1, 10**pixel_max_decimals),
+                                      resolution_tolerance       = Fraction(str(resolution_tolerance_A)))
+    logger.info(f"+ Total candidates  : {len(history)}")
+    logger.info("Checking feasibility...")
+    count = (~history["has_prime_factor"]).sum()
+    logger.info(f"+ Filtering out binning factors with prime factors > 13     : {count}")
+    count = (history["has_prime_factor"] & ~(history["has_finite_binning"])).sum()
+    logger.info(f"+ Filtering out binning factors with infinite decimal places: {count}")
+    count = (history["has_prime_factor"] & history["has_finite_binning"] & (history["count_compatible_boxes"]==0)).sum()
+    logger.info(f"+ Filtering out binning factors with no box compatibility   : {count}")
+    logger.info(f"+ Feasible solutions: {history['is_feasible'].sum()}")
+
+    # 2. pareto front
+    logger.info("Computing pareto front...")
+    logger.info("+ Minimizing number of decimal places in the resulting binned pixel size...")
+    logger.info("+ Maximizing compatibility between binning factor and FFT-friendly box list...")
+    mask = history["is_feasible"]
+    incompatibility_mask = history[mask]["mask_compatible_boxes"].apply(lambda m: (~m).astype(int)) # minimization -> 0:compatible, 1:incompatible
+    objectives = np.column_stack([incompatibility_mask.to_list(),
+                                  history[mask]["n_decimals_pixel"].to_numpy()])
+    pareto_idx_group = compute_pareto_front(objectives)
+
+    # update history
+    history["pareto"] = 0
+    history.loc[history.index[mask][pareto_idx_group], "pareto"] = 1
+    logger.info(f"+ Non-dominated solutions: {sum(history['pareto']>0)}")
+
+    # 3. pareto solutions, best first
+    view = history[history["pareto"]>0].sort_values(by=["count_compatible_boxes", "n_decimals_pixel", "d_resolution"], ascending=[False, True, True])
+    pareto_csv = pd.DataFrame({"binning_factor"            :view["binning_factor"].astype(float),
+                               "binned_pixel_size_A_per_px":view["binned_pixel_size"].astype(float),
+                               "target_resolution_A"       :view["target_resolution"].astype(float),
+                               "compatibility_factors"     :view["binning_factor"].apply(lambda b: numbers.prime_factors_to_str(numbers.prime_factorization(b.denominator * (1 + b.numerator % 2)))),
+                               "count_compatible_boxes"    :view["count_compatible_boxes"],
+                               "compatible_boxes"          :view["mask_compatible_boxes"].apply(lambda m: fft_box_sizes_px[m]).to_list()
+    })
+
+    # 4. output organization
+    ranks  = pareto_csv.head(3).to_dict(orient="records") # "records" -> list of dicts, where each pd row is a dict
+    values = {f"rank{i+1}": ranks[i] if i < len(ranks) else None for i in range(3)}
+
+    data   = {"history": history,    # every candidate: constraints, objectives and pareto level
+              "pareto" : pareto_csv} # pareto solutions, best first
+
+    return values, data
+
 if __name__ == "__main__":
-    ########## CLI setup ##########
+    ### 1. CLI setup ###
     parser = argparse.ArgumentParser()
     # required
     parser.add_argument("-p", "--pixel_size"       , type=float, required=True, help="Current Pixel Size")
     parser.add_argument("-t", "--target_resolution", type=float, required=True, help="Target Resolution")
     # optionals
-    parser.add_argument("--sampling_ratio",                 type=float, default=3,    help="The ratio of target resolution to pixel size. Higher values give more sampling margin but require finer pixels. Nyquist limit: 2, Oversampling: >2.")
+    parser.add_argument("--sampling_ratio",                 type=float, default=3.0,    help="The ratio of target resolution to pixel size. Higher values give more sampling margin but require finer pixels. Nyquist limit: 2, Oversampling: >2.")
     parser.add_argument("--resolution_tolerance",           type=float, default=0.2,  help="Acceptable tolerance from the target resolution in Å.")
     parser.add_argument("--pixel_max_decimals",             type=int,   default=6,    help="Maximum number of decimal places allowed for the binned pixel size.")
     parser.add_argument("-lb", "--compatible-box-min-size", type=int,   default=64,   help="Minimum FFT-friendly box size considered for compatibility (default: 64).")
-    parser.add_argument("-ub", "--compatible-box-max-size", type=int,   default=1024, help="Maximum FFT-friendly box size considered for compatibility (default: 1024).")
+    parser.add_argument("-ub", "--compatible-box-max-size", type=int,   default=512, help="Maximum FFT-friendly box size considered for compatibility (default: 1024).")
     parser.add_argument("-db", "--compatible-box-divisible-by", type=int, nargs="+", default=(2, 4, 5, 8, 10), help="Only consider FFT-friendly box sizes divisible by the input values (default: 2, 4, 5, 8, 10).")
     
     args = utils.cli.init_cli(__myname__, parser) # check the docstring for complete behavior; args.output_path is the resolved run directory
-    ##### / #####
 
-    #### step 0: filter fft sizes ####
-    fft_sizes_filtered = box.get_fft_friendly_sizes(min_size=args.compatible_box_min_size, 
-                                                    max_size=args.compatible_box_max_size,
-                                                    divisible_by=args.compatible_box_divisible_by)
+    ### 2. I/O DEFINITION ###
+    inputs  = {"pixel_size_A_per_px"        : args.pixel_size,
+               "target_resolution_A"        : args.target_resolution,
+               "sampling_ratio"             : args.sampling_ratio,
+               "resolution_tolerance_A"     : args.resolution_tolerance,
+               "pixel_max_decimals"         : args.pixel_max_decimals,
+               "compatible_box_min_size_px" : args.compatible_box_min_size,
+               "compatible_box_max_size_px" : args.compatible_box_max_size,
+               "compatible_box_divisible_by": args.compatible_box_divisible_by,
+               "fft_box_sizes_px"           : ..., # remaining sizes after applying the three filters above
+    }
+    outputs = {"rank1"                 : ...,  # pareto solutions, best first; None when there are fewer
+               "rank2"                 : ..., # when more than one solution is available
+               "rank3"                 : ...,
+               "pareto_csv_filepath"   : None, # only when --output-dir
+               "pareto_figure_filepath": None, # only when --output-dir
+               "history_csv_filepath"  : None, # only when --output-dir and --debug
+    }
+
+    ### 3. PREPROCESSING ###
+    inputs["fft_box_sizes_px"] = box.get_fft_friendly_sizes(min_size     = inputs["compatible_box_min_size_px"],
+                                                             max_size     = inputs["compatible_box_max_size_px"],
+                                                             divisible_by = inputs["compatible_box_divisible_by"])
     logger.info("FFT-friendly box sizes considered for binning factor compatibility:")
-    logger.info(f"+ Filtering by size range: [{args.compatible_box_min_size}, {args.compatible_box_max_size}]")
-    logger.info(f"+ Filtering by divisibility: {", ".join(map(str, args.compatible_box_divisible_by))}")
-    logger.info(f"+ Available sizes: {len(fft_sizes_filtered)}")
+    logger.info(f"+ Filtering by size range: [{inputs['compatible_box_min_size_px']}, {inputs['compatible_box_max_size_px']}]")
+    logger.info(f"+ Filtering by divisibility: {', '.join(map(str, inputs['compatible_box_divisible_by']))}")
+    logger.info(f"+ Available sizes: {len(inputs['fft_box_sizes_px'])}")
 
-    #### step 1: search process ####
-    logger.info("Exhaustive evaluation of binning parameters...")
-    # convert everything to fractions to minimize float related problems
-    history = find_binning_parameters(target_resolution_A        = Fraction(str(args.target_resolution)), 
-                                      pixel_size_A_per_pixel     = Fraction(str(args.pixel_size)), 
-                                      sampling_ratio            = Fraction(str(args.sampling_ratio)),
-                                      evaluation_boxes           = fft_sizes_filtered,
-                                      evaluation_feasible_primes = (2, 3, 5, 7, 11, 13),
-                                      grid_step                  = Fraction(1, 10**args.pixel_max_decimals),
-                                      resolution_tolerance       = Fraction(str(args.resolution_tolerance)))
-    logger.info(f"+ Total candidates  : {len(history)}")
-    logger.info("Checking feasibility...")
-    _count = (~history["has_prime_factor"]).sum()
-    logger.info(f"+ Filtering out binning factors with prime factors > 13     : {_count}")
-    _count = (history["has_prime_factor"] & ~(history["has_finite_binning"])).sum()
-    logger.info(f"+ Filtering out binning factors with infinite decimal places: {_count}")
-    _count = (history["has_prime_factor"] & history["has_finite_binning"] & (history["count_compatible_boxes"]==0)).sum()
-    logger.info(f"+ Filtering out binning factors with no box compatibility   : {_count}")
-    logger.info(f"+ Feasible solutions: {history['is_feasible'].sum()}")
+    ### 4. MAIN ###
+    values, data = run(pixel_size_A_per_px    = inputs["pixel_size_A_per_px"],
+                       target_resolution_A    = inputs["target_resolution_A"],
+                       sampling_ratio         = inputs["sampling_ratio"],
+                       resolution_tolerance_A = inputs["resolution_tolerance_A"],
+                       pixel_max_decimals     = inputs["pixel_max_decimals"],
+                       fft_box_sizes_px       = inputs["fft_box_sizes_px"])
+    outputs.update(values)
     
-    # (debug only) save history
-    if args.output_path and args.debug:
-        filepath = os.path.join(args.output_path, f"history_{args.pixel_size}ÅperPixel_{args.target_resolution}Å.csv")
-        history.to_csv(filepath, index=False)
-        logger.info(f"+ Search evaluation saved to {filepath}")
-
-    #### step 2: pareto front ####
-    logger.info("Computing pareto front...")
-    logger.info("+ Minimizing number of decimal places in the resulting binned pixel size...")
-    logger.info("+ Maximizing compatibility between binning factor and FFT-friendly box list...")
-
-    # prepare objectives and compute pareto
-    _mask = history["is_feasible"]
-    _incompatibility_mask = history[_mask]["mask_compatible_boxes"].apply(lambda m: (~m).astype(int)) # minimization -> 0:compatible, 1:incompatible
-    objectives = np.column_stack([_incompatibility_mask.to_list(), 
-                                  history[_mask]["n_decimals_pixel"].to_numpy()])
-    _pareto_idx_group = compute_pareto_front(objectives)
-
-    # update history
-    history["pareto"] = 0
-    history.loc[history.index[_mask][_pareto_idx_group], "pareto"] = 1
-    logger.info(f"+ Non-dominated solutions: {sum(history['pareto']>0)}")
-    
-    if args.output_path and args.debug: 
-    # (debug only) save updated history with pareto information
-        filepath = os.path.join(args.output_path, f"history_{args.pixel_size}ÅperPixel_{args.target_resolution}Å.csv")
-        history.to_csv(filepath, index=False)
-        logger.info(f"+ Search evaluation updated at {filepath}")
-
-    # save csv with all solutions in the pareto
-    _view = history[history["pareto"]>0].sort_values(by=["count_compatible_boxes", "n_decimals_pixel", "d_resolution"], ascending=[False, True, True])
-    pareto_csv = pd.DataFrame({"binning_factor"            :_view["binning_factor"].astype(float),
-                               "binned_pixel_size_A_per_px":_view["binned_pixel_size"].astype(float),
-                               "target_resolution_A"       :_view["target_resolution"].astype(float),
-                               "compatibility_factors"     :_view["binning_factor"].apply(lambda b: numbers.prime_factors_to_str(numbers.prime_factorization(b.denominator))),
-                               "count_compatible_boxes"    :_view["count_compatible_boxes"],
-                               "compatible_boxes"          :_view["mask_compatible_boxes"].apply(lambda m: fft_sizes_filtered[m]).to_list()
-    })
-    logger.info("Recommended binning factor: ")
-    result = {f"rank{i+1}":entry for i, entry in enumerate(pareto_csv.head(3).to_dict(orient="records"))} # "recors"->list of dicts, where each pd row is a dict
-    output = utils.output.print_and_save(result,
-                                         print_as="json" if args.json else ("yaml" if not args.verbose else None),
-                                         filepath=os.path.join(args.output_path, __myname__) if args.output_path else None)
-    logger.info(f"Top #{len(pareto_csv.head(3))} Results:\n\n{output['yaml']}")
-
-    #### step 3: save pareto.csv and pareto.png ####
+    ### 5. POSTPROCESSING ###
     if args.output_path:
-        #### csv ####
-        filepath = os.path.join(args.output_path, f"optimal_{args.pixel_size}ÅperPixel_{args.target_resolution}Å.csv")
-        pareto_csv.to_csv(filepath, index=False)
-        logger.info(f"+ Pareto solutions saved to {filepath}")
+        # save pareto solutions
+        outputs["pareto_csv_filepath"] = os.path.join(args.output_path, "pareto.csv")
+        data["pareto"].to_csv(outputs["pareto_csv_filepath"], index=False)
+        logger.info(f"+ Pareto solutions saved to {outputs['pareto_csv_filepath']}")
 
-        #### figure ####
+        # save figure
         logger.info("Generating figures...")
+        outputs["pareto_figure_filepath"] = os.path.join(args.output_path, "pareto.png")
+        generate_figures(data["history"], inputs["target_resolution_A"], outputs["pareto_figure_filepath"])
+        logger.info(f"+ Saved to {outputs['pareto_figure_filepath']}")
 
-        # adjust dataframe
-        _toplot = history.rename(columns={"d_resolution": "obj1", "n_decimals_pixel": "obj2"})
-        _sign = np.where(_toplot["is_worse_than_target"], 1, -1)         # obj1 is just the magnitude, 
-        _toplot["obj1"] = args.target_resolution + _sign*_toplot["obj1"] # lets plot the actual resolution
-        
-        # plot
-        filepath = os.path.join(args.output_path, f"pareto_{args.pixel_size}ÅperPixel_{args.target_resolution}Å.png") if args.output_path else None
-        plot_pareto(_toplot, all_solutions=True, feasible_solutions=True, 
-                y_label                  = "Number of decimals in the Binned Pixel Size",
-                x_label                  = "Actual Target Resolution",
-                title_str                = f"Target Resolution: {args.target_resolution} Å",
-                legend_str               = "Candidate Solutions",
-                all_solutions_label      = "Not Feasible", # "unfeasible"
-                feasible_solutions_label = "Dominated",
-                pareto_labels            = ["Differ in box compatibility"],
-                pareto_annotations       = history[history["pareto"]>0]["binning_factor"].to_dict(),
-                filepath                 = filepath
-        )
-
-        logger.info(f"+ Saved to {filepath}")
+        # (debug only) save every candidate of the search
+        if args.debug:
+            outputs["history_csv_filepath"] = os.path.join(args.output_path, "history.csv")
+            data["history"].to_csv(outputs["history_csv_filepath"], index=False)
+            logger.info(f"+ Search evaluation saved to {outputs['history_csv_filepath']}")
     else:
         logger.info("For additional information, consider providing '--output-dir'.")
 
-    logger.info(f"Exiting...")
+    # save I/O
+    utils.output.print_and_save({"input":inputs, "output":outputs},
+                                print_as="json" if args.json else "yaml",
+                                filepath=os.path.join(args.output_path, __myname__) if args.output_path else None)
+    logger.info("Exiting...")
     logger.info("-"*40)
