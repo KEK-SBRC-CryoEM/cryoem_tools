@@ -60,17 +60,32 @@ And one of:
 | `--verbose`    | Enable verbose logging.       |
 | `--output-dir` | Specify a directory to enable saving the output. If not provided, results print to stdout and logs to stderr only. If provided, a subdirectory named `volume_alignment` will be created under this specified directory. If it already exists, a unique suffix is appended. | 
 
-## Outputs
+## Output
 
 Written to `<output-dir>/volume_alignment/`:
 
 | File | Description |
 | --- | --- |
 | `aligned_<volume>.mrc` | The aligned volume. |
-| `aligned_<mask>.mrc`   | The segmentation, aligned with the same transform. |
-| `orthogonal_view.png`  | Maximum projections of the segmentation before and after alignment (with `--save`). |
+| `aligned_<mask>.mrc`   | The aligned mask. |
+| `orthogonal_view.png`  | Maximum projections of the segmentation before and after alignment (when `--save`). |
 
 If the segmentation is empty (no voxels above the threshold), the script raises an error; check that the threshold lies within the volume's density range.
+
+| Layer    | Variable                  | Description |
+| -------- | ------------------------- | ----------- |
+| `input`  | `volume_filepath`         | Volume filepath (`--volume`) |
+| `input`  | `mask_filepath`           | Mask filepath (`--mask`), otherwise `null` |
+| `input`  | `threshold`               | Segmentation threshold (`--threshold`); `null` with `--mask`, since it isn't used |
+| `input`  | `box_size_px`             | Box size of the volume [px] |
+| `input`  | `pixel_size_A_per_px`     | Pixel size of the volume [Å/px], from the file header |
+| `output` | `aligned_volume_filepath` | Path of the aligned volume |
+| `output` | `aligned_mask_filepath`   | Path of the aligned mask with `--mask`, otherwise `null` |
+| `output` | `center_zyx_px`           | Particle center in the input volume [px], as array indices in (z, y, x) |
+| `output` | `rotation_zyx`            | Rotation applied, as a 3×3 matrix in (z, y, x) array order. Its columns are the particle's shortest, middle and longest axes in the input volume, which end up along Z, Y and X |
+| `output` | `principal_variances_px2` | Variance of the voxel coordinates along the shortest, middle and longest axes [px²] |
+| `output` | `skewness`                | Skewness of the voxel coordinates along the same axes, after orienting them: the two most skewed are positive |
+| `output` | `figure_filepath`         | Path of the figure with `--save`, otherwise `null` |
 
 ### Example
 
