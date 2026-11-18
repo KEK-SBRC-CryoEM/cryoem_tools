@@ -359,6 +359,12 @@ if __name__ == "__main__":
     args = utils.cli.init_cli(__myname__, parser) # check the docstring for complete behavior; args.output_path is the resolved run directory
     basedir = args.output_path
 
+    if args.debug:
+        logger.info("DEBUG MODE ON: ")
+        logger.info("+ saves and updates pipeline_data.pkl during execution.")
+        logger.info("+ shows error stack in case of an exception.")
+        logger.info("-"*40)
+
     # Input files handling
     settings = load_settings(args.config_filepath_list)
 
@@ -377,18 +383,13 @@ if __name__ == "__main__":
         logger.error("Check your inputs. The following settings are missing: "+" ".join(missing_settings))
         raise Exception("Missing input settings. Expected 'input', 'workflow', and 'system' sections") 
 
-    if args.debug:
-        logger.info("DEBUG MODE ON: ")
-        logger.info("+ saves and updates pipeline_data.pkl during execution.")
-        logger.info("+ shows error stack in case of an exception.")
-        logger.info("-"*40)
-    logger.info("-"*40)
-    for i, f in enumerate(args.config_filepath_list):
-        logger.info(f"Config file #{i+1}: {f}")
-    logger.info("-"*40)
-    logger.info("Reference MAP:              " + settings["input"]["user"].get("reference_map_filepath",   "None"))
-    logger.info("CS-Schemes EM Settings:     " + settings["input"]["user"].get("em_settings_filepath",     "None"))
-    logger.info("CS-Schemes Sample Settings: " + settings["input"]["user"].get("sample_settings_filepath", "None"))
+    # logger.info("-"*40)
+    # for i, f in enumerate(args.config_filepath_list):
+    #     logger.info(f"Config file #{i+1}: {f}")
+    # logger.info("-"*40)
+    # logger.info("Reference MAP:              " + settings["input"]["user"].get("reference_map_filepath",   "None"))
+    # logger.info("CS-Schemes EM Settings:     " + settings["input"]["user"].get("em_settings_filepath",     "None"))
+    # logger.info("CS-Schemes Sample Settings: " + settings["input"]["user"].get("sample_settings_filepath", "None"))
     logger.info("-"*40)
 
     exit_code = 0
