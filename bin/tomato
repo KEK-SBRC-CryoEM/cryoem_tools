@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+if [ -z "$CSPA_PYTHON" ] || [ -z "$CSPA_ROOT" ]; then
+    echo "Error: CSPA environment variables not found. Did you load the 'spa_tools' module?" >&2
+    exit 1
+fi
+
+exec "$CSPA_PYTHON" "$CSPA_ROOT/automation/tomato.py" "$@"
