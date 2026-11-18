@@ -52,3 +52,27 @@ workflow:
       - "--json"
       - "--verbose"
   # output: output.delocalization_max_width_A, output.delocalization_box_px
+
+  ### 5. CS-SCHEMES PARAMETERS ###
+  - name: cs_schemes
+    command: css_parameters
+    args:
+      - "--workflow"                : "size_matters"
+      # from the workflow
+      - "--lbin_pixel_size"         : {from: workflow.calc_binning.output.rank1.binned_pixel_size_A_per_px}
+      - "--lbin_binning_factor"     : {from: workflow.calc_binning.output.rank1.binning_factor}
+      - "--lbin_compatible_boxes"   : {from: workflow.calc_binning.output.rank1.compatible_boxes}
+      - "--lbin_deloc_box"          : {from: workflow.calc_deloc_box.output.delocalization_box_px}
+      - "--particle_diameter"       : {from: workflow.calc_size-reference_volume.output.diameter_px, default: 0}
+      # from the user inputs
+      - "--particle_pixel_size"     : {from: input.em_settings.EM_mics_apix}
+      - "--micrograph_lower_bound_x": {from: input.user.micrograph_lower_bound_x, default: 0}
+      - "--micrograph_lower_bound_y": {from: input.user.micrograph_lower_bound_y, default: 0}
+      - "--micrograph_upper_bound_x": {from: input.user.micrograph_upper_bound_x}
+      - "--micrograph_upper_bound_y": {from: input.user.micrograph_upper_bound_y}
+      - "--padding_pixels"          : {from: input.user.padding_pixels          , default: 0}
+      - "--padding_angstrom"        : {from: input.user.padding_angstrom        , default: 0}
+      - "--padding_percentage"      : {from: input.user.padding_percentage      , default: 0}
+      - "--output-dir"              : "$OUTDIR"
+      - "--json"
+      - "--verbose"

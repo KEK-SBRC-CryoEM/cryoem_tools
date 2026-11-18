@@ -6,6 +6,15 @@ input:
         ### microscope related ###
         defocus          : 1.5 # [μm]
 
+        ### micrograph related (future: automate lookup) ###
+        micrograph_upper_bound_x: 3838 # number of rows
+        micrograph_upper_bound_y: 3710 # number of cols
+        
+        ### padding type ###
+        # padding_pixels    : 0
+        # padding_angstrom  : 0.0
+        padding_percentage: 0.2
+
         ### binning factor ###
         target_resolution: 6 # [Å]
 

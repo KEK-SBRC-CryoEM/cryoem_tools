@@ -21,9 +21,9 @@ system:
       env : python_cryoem_tools
       path: /lustre1/emsystem/apps/cryoem_tools/src/spa/analyses/volume_alignment.py
 
-    boxsize_analysis:
+    css_parameters:
       env : python_cryoem_tools
-      path: /lustre1/emsystem/apps/cryoem_tools/src/spa/analyses/boxsize_analysis.py
+      path: /lustre1/emsystem/apps/cryoem_tools/automation/css_parameters.py
 
   ### extra tools ###
     python:
