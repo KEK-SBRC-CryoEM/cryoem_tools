@@ -1,6 +1,6 @@
 system:
   env:
-    python_deepmasc    : /lustre1/home/senda-em/.conda/envs/DeepMASC/bin/python
+    python_deepmasc    : /lustre1/emsystem/apps/pyenv/versions/anaconda3-5.3.1/envs/deepmasc/bin/python
     python_cryoem_tools: /lustre1/emsystem/apps/pyenv/versions/anaconda3-5.3.1/envs/cspa/bin/python
 
   toolbox:
@@ -34,4 +34,4 @@ system:
 
     deepmasc_contour: 
       env : python_deepmasc
-      path: /lustre1/home/senda-em/emdata_senda-em/apps/DeepMASC/contour.py
+      path: /lustre1/emsystem/apps/DeepMASC_2026/DeepMASC/contour.pyenv
