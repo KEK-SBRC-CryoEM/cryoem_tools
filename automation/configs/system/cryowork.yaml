@@ -34,4 +34,4 @@ system:
 
     deepmasc_contour: 
       env : python_deepmasc
-      path: /lustre1/emsystem/apps/DeepMASC_2026/DeepMASC/contour.pyenv
+      path: /lustre1/emsystem/apps/DeepMASC_2026/DeepMASC/contour.py
