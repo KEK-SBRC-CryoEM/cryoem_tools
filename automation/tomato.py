@@ -260,6 +260,7 @@ def run(workflow_data, toolbox_settings, basedir, debug=False):
         logger.info(f"Running...")
         output = run_subprocess(name, entry["invocation"], entry["output_dir"])
 
+        ## 2.5 organize information 
         if isinstance(output, dict) and output.keys() == {"input", "output"}:
             entry["input"]  = output["input"]
             entry["output"] = output["output"]
@@ -269,28 +270,28 @@ def run(workflow_data, toolbox_settings, basedir, debug=False):
         logger.info(f"+ Output: {entry['output']}")
 
         # 3. Postprocessing rules
-        if entry["postprocessing"]:
-            logger.info(f"Postprocessing...")
-            entry["output_original"] = entry["output"]
-            logger.info(f"+ Moving original  output to: 'workflow.{name}.output_original'")
-            logger.info(f"+ Saving processed output to: 'workflow.{name}.output'")
+        # if entry["postprocessing"]:
+        #     logger.info(f"Postprocessing...")
+        #     entry["output_original"] = entry["output"]
+        #     logger.info(f"+ Moving original  output to: 'workflow.{name}.output_original'")
+        #     logger.info(f"+ Saving processed output to: 'workflow.{name}.output'")
             
-            for rule in entry["postprocessing"]:
-                logger.info(f"+ Applying '{rule['method']}' to '{rule['target']}'")
-                ## 3.1 get callable
-                method = getattr(postprocessing_rules, rule["method"])
+        #     for rule in entry["postprocessing"]:
+        #         logger.info(f"+ Applying '{rule['method']}' to '{rule['target']}'")
+        #         ## 3.1 get callable
+        #         method = getattr(postprocessing_rules, rule["method"])
 
-                ## 3.2 solve syntax sugar for self.target
-                target_temp = {"self": {"target":entry['output'][rule['target']]}}
+        #         ## 3.2 solve syntax sugar for self.target
+        #         target_temp = {"self": {"target":entry['output'][rule['target']]}}
 
-                ## 3.3 parse arguments
-                resolved_args = parse_callable_arglist(args=rule["args"], 
-                                                    workflow_data=workflow_data|target_temp, 
-                                                    str_context=ctx) 
+        #         ## 3.3 parse arguments
+        #         resolved_args = parse_callable_arglist(args=rule["args"], 
+        #                                             workflow_data=workflow_data|target_temp, 
+        #                                             str_context=ctx) 
             
-                ## 3.4 call
-                entry["output"][rule['target']] = method(**resolved_args)
-                logger.info(f"+ := {entry['output'][rule['target']]}")
+        #         ## 3.4 call
+        #         entry["output"][rule['target']] = method(**resolved_args)
+        #         logger.info(f"+ := {entry['output'][rule['target']]}")
 
         entry["status"] = "done"
         logger.info("Done!")
@@ -398,10 +399,10 @@ if __name__ == "__main__":
                               debug            = args.debug)
 
         # evaluate the cs-schemes parameters
-        workflow_result = css_run(settings.get("css", {}), 
-                                  workflow_data = workflow_result, 
-                                  basedir       = basedir,
-                                  debug         = args.debug)
+        # workflow_result = css_run(settings.get("css", {}), 
+        #                           workflow_data = workflow_result, 
+        #                           basedir       = basedir,
+        #                           debug         = args.debug)
     except Exception as error:
         # if DEBUG: capture the error stack
         logger.error(f"PIPELINE CRASHED!! {type(error).__name__}: {error}", exc_info=args.debug)
