@@ -159,7 +159,8 @@ def parse_subprocess_arglist(args, workflow_data, str_context):
             # flag and value
             if key.startswith("-"):
                 resolved = resolve_value(value, workflow_data, str_context)
-                value    = [key, str(resolved)]
+                # value    = [key, str(resolved)]
+                value = [key, *map(str, resolved)] if isinstance(resolved, list) else [key, str(resolved)] # handle lists as input
             # value only (dict)
             else:
                 resolved = resolve_value(arg, workflow_data)
