@@ -1,12 +1,15 @@
 import numpy as np
+
+from fractions import Fraction
+
 from spa.box import FFT_FRIENDLY_SIZES
 
 def compute_boxes(target_rescaled_box:int|float, binning_factor:float=1.0, boxsize_list=None) -> dict|None:
     """
     Compute extraction and rescaled box sizes compatible with the target size.
 
-    The function selects an extraction box size from a list of valid box sizes
-    and computes the corresponding rescaled box size using the binning factor.
+    The function selects the smallest rescaled box size from a list of valid box sizes
+    and computes the corresponding extraction box (rescaled box x binning factor).
     If `boxsize_list` is not provided, a default FFT-friendly box-size list is used.
 
     Returns
@@ -21,6 +24,8 @@ def compute_boxes(target_rescaled_box:int|float, binning_factor:float=1.0, boxsi
 
     if boxsize_list is None:
         boxsize_list = FFT_FRIENDLY_SIZES
+
+    binning_factor = Fraction(str(binning_factor))
 
     filtered_boxes = boxsize_list[(boxsize_list>=target_rescaled_box)]
     i = np.argwhere((filtered_boxes * binning_factor) % 2 == 0)
@@ -44,6 +49,8 @@ def compute_coordinates(box:int, upper_bound_x:int  , upper_bound_y:int,
             "max_x": compute_coordinates_max(box, upper_bound_x),
             "max_y": compute_coordinates_max(box, upper_bound_y),
     }
+
+
 
 def compute_coordinates_min(box:int, lower_bound:int=0) -> int:
     return int(lower_bound + (box // 2))
