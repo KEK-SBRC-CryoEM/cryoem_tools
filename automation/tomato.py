@@ -11,7 +11,6 @@ import pickle
 from pathlib import Path
 
 from spa import utils
-import postprocessing_rules
 
 ### usage examples ###
 # 1) all settings in one config yaml file
@@ -62,23 +61,13 @@ def process_workflow_settings(settings):
     settings = {entry["name"]: {"command"       : entry["command"],
                                 "args"          : entry["args"],
                                 "requires"      : entry.get("requires", None), # list of paths that must be set to run the step
-                                "postprocessing": entry.get("postprocessing", None),
                                 "invocation"    : None, # derived from command and args
                                 "output_dir"    : None, # basedir + name
                                 "status"        : None, # "done" or "skipped"
                                 "input"         : None, # if analyses: the input layer of their record
                                 "output"        : None, # if analyses: the output layer of their record; if external commands: stdout as is
-                                # "output_original": a copy of the original output if any postprocessing rule was applied
                                 }
                                                 for entry in settings}
-
-    # postprocessing: convert args from a list of dicts to a single dict
-    # for entry in settings.values():
-    #     for rule in entry["postprocessing"] or []:
-    #         args = rule.get("args", None)
-    #         if args:
-    #             rule["args"] = {k: v for d in args for k, v in d.items()}
-
     return {"workflow": settings}
 
 def process_user_inputs(settings):
@@ -270,83 +259,12 @@ def run(workflow_data, toolbox_settings, basedir, debug=False):
 
         logger.info(f"+ Output: {entry['output']}")
 
-        # 3. Postprocessing rules
-        # if entry["postprocessing"]:
-        #     logger.info(f"Postprocessing...")
-        #     entry["output_original"] = entry["output"]
-        #     logger.info(f"+ Moving original  output to: 'workflow.{name}.output_original'")
-        #     logger.info(f"+ Saving processed output to: 'workflow.{name}.output'")
-            
-        #     for rule in entry["postprocessing"]:
-        #         logger.info(f"+ Applying '{rule['method']}' to '{rule['target']}'")
-        #         ## 3.1 get callable
-        #         method = getattr(postprocessing_rules, rule["method"])
-
-        #         ## 3.2 solve syntax sugar for self.target
-        #         target_temp = {"self": {"target":entry['output'][rule['target']]}}
-
-        #         ## 3.3 parse arguments
-        #         resolved_args = parse_callable_arglist(args=rule["args"], 
-        #                                             workflow_data=workflow_data|target_temp, 
-        #                                             str_context=ctx) 
-            
-        #         ## 3.4 call
-        #         entry["output"][rule['target']] = method(**resolved_args)
-        #         logger.info(f"+ := {entry['output'][rule['target']]}")
-
         entry["status"] = "done"
         logger.info("Done!")
         logger.info("-"*40)        
         save_state(workflow_data, basedir, debug)
 
     return workflow_data
-
-def css_run(css_settings, workflow_data, basedir, debug=False):
-    logger.info("CS-Schemes:".upper())
-    logger.info("+ Preparing to extrat parameters")
-    css_result = {}
-    ctx = {"$BASEDIR": basedir}
-    for name, content in css_settings.items():
-        logger.info(f"{name.upper()}")
-
-        # run a callable to get the result
-        if isinstance(content, dict) and content.get("methods", None):
-            for entry in content["methods"]:
-                logger.info(f"+ Calling '{entry['name']}...'")
-
-                ## 3.1 get callable
-                method = getattr(postprocessing_rules, entry['name'])
-
-                ## 3.3 parse arguments
-                css_ctx = css_result|{"self":css_result.get(name, None)}
-
-                resolved_args = parse_callable_arglist(args=entry["args"], 
-                                                        workflow_data=workflow_data|css_ctx, 
-                                                        str_context=ctx)
-
-                ## 3.4 call
-                css_result[name] = method(**resolved_args)
-        # lookup
-        elif isinstance(content, dict) or isinstance(content, str):
-            css_result[name] = resolve_value(content, workflow_data|css_result, ctx)
-        # value itself
-        else:
-            css_result[name] = content
-
-        # show output
-        logger.info(f"\t\t := {css_result[name]}")
-
-        # save state data for debugging
-        if debug:
-            with open(os.path.join(basedir, "css_data.pkl"), "wb") as file:
-                pickle.dump(css_result, file)
-
-        # final output
-        _ = utils.output.print_and_save(css_result, 
-                                        print_as=None,
-                                        filepath=os.path.join(basedir, "css_parameters") if basedir else None)
-
-    return css_result
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Run a workflow. Each run is saved to <output-dir>/tomato, with a suffix if it already exists.")
@@ -390,7 +308,7 @@ if __name__ == "__main__":
     # logger.info("Reference MAP:              " + settings["input"]["user"].get("reference_map_filepath",   "None"))
     # logger.info("CS-Schemes EM Settings:     " + settings["input"]["user"].get("em_settings_filepath",     "None"))
     # logger.info("CS-Schemes Sample Settings: " + settings["input"]["user"].get("sample_settings_filepath", "None"))
-    logger.info("-"*40)
+    # logger.info("-"*40)
 
     exit_code = 0
     try:
