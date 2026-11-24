@@ -1,7 +1,7 @@
 input:
     user:
         ### reference map ###
-        reference_map_filepath : relion/inputs/reference_volume/emd_0407.map
+        reference_map_filepath : relion/Inputs/reference_volume/emd_0407.map
         
         ### microscope related ###
         defocus          : 1.5 # [μm]
