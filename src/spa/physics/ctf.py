@@ -294,48 +294,6 @@ def phaseshift_ctf2d(lambda_, pixel_size, defocus, cs, boxsize):
     a = (cs * lambda_**3 * s2)/2
     b = defocus * lambda_
     gamma = np.pi*s2*(a+b)
-    phaseshift_ctf = -np.sin(gamma)    
+    phaseshift_ctf = -np.sin(gamma)
 
     return s, phaseshift_ctf
-
-if __name__ == "__main__": #*
-	# python ctf.py -b 400 -p 1.2 -v 300 -d -0.8 -c 2.7 --verbose
-    ########## CLI setup ##########
-    parser = argparse.ArgumentParser(description="Estimate the CTF aliasing limit based on microscope parameters.")	
-    parser.add_argument("-b", "--boxsize",    type=int,   required=True, help="Boxsize in pixels (size of the extracted image square).")
-    parser.add_argument("-p", "--pixel_size", type=float, required=True, help="Pixel size in [Å].")
-    parser.add_argument("-v", "--voltage",    type=float, required=True, help="Microscope accelerating voltage in [kV].")
-    parser.add_argument("-d", "--defocus",    type=float, required=True, help="Defocus value in micrometers [µm].")
-    parser.add_argument("-c", "--cs",         type=float, required=True, help="Spherical aberration constant (Cs) in millimeters [mm].")
-    parser.add_argument("--sparx", action="store_true", help="Follow EMAN2/SPARX behavior (off-by-one and downward scan).")
-
-    args = utils.cli.init_cli(__myname__, parser) # check the docstring for complete behavior; args.output_path is the resolved run directory
-    ##### / #####
-
-    # computation
-    if not args.sparx:
-        result = ctf_limit(box_size  = args.boxsize, 
-                        pixel_size_A = args.pixel_size,
-                        voltage_kV   = args.voltage,
-                        defocus_A    = args.defocus*1e4,# Convert µm to Å
-                        cs_A         = args.cs*1e7,     # Convert mm to Å,
-                        min_bins_per_cycle = 2)
-    else:
-        result = ctf_limit_sparx(box_size     = args.boxsize, 
-                                 pixel_size_A = args.pixel_size,
-                                 voltage_kV   = args.voltage,
-                                 defocus_um   = args.defocus,
-                                 cs_mm        = args.cs)
-
-    # output interface
-    result_dict = {"bin":int(result[0]),
-                   "frequency":float(result[1]),
-                   "resolution":float(1/result[1])}
-    
-    # print and save output
-    output = utils.output.print_and_save(result_dict, 
-                                         print_as="json" if args.json else "yaml",
-                                         filepath=os.path.join(args.output_path, __myname__) if args.output_path else None)
-    logger.info(f"Result:\n{output['yaml']}")
-    logger.info(f"Exiting...")
-    logger.info("-"*40)
