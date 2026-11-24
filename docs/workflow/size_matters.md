@@ -33,7 +33,8 @@ tomato -c $CFG/user/emd_0407.yaml $CFG/system/cryowork.yaml $CFG/workflow/size_m
 ```
 
 - Results are at `./tomato/`. If that folder exists, a timestamp is added to the name; `-o <dir>` puts the results elsewhere.
-- The CS-Schemes parameters are in the `output:` section of `tomato/cs_schemes/css_parameters/css_parameters.yaml`.
+- The CS-Schemes parameters are printed at the end of the message.
+    - It is also possible to check it by running the command `cat tomato/cs_schemes/css_parameters/css_parameters.yaml`.
 - The detailed output history of this workflow is at `tomato/pipeline_data.yaml`
 
 ## Run the steps individually
@@ -79,7 +80,7 @@ tomato -c my_dataset.yaml $CFG/system/cryowork.yaml $CFG/workflow/size_matters.y
 
 | Key | Unit | Value |
 |---|---|---|
-| `reference_map_filepath` | path | A map of the particle, used to measure its size. Optional: without it (or with `size_matters_no_diameter.yaml`), the `*_pmd` parameters are `<INVALID>` and the box holds only the delocalized signal, not the particle. |
+| `reference_map_filepath` | path | A map of the particle, used to measure its size. If the reference map is not available, use the following workflow: `size_matters_no_diameter.yaml`. |
 | `defocus` | µm | The representative defocus in the dataset, positive for underfocus. |
 | `target_resolution` | Å | Target resolution of the binned (lbin) stage; it sets the binning factor. |
 | `micrograph_upper_bound_x`, `micrograph_upper_bound_y` | px | Micrograph width (x) and height (y). |
