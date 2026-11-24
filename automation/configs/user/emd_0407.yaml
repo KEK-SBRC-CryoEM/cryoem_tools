@@ -16,7 +16,7 @@ input:
         padding_percentage: 0.2
 
         ### binning factor ###
-        target_resolution: 6 # [Å]
+        target_resolution: 8 # [Å]
 
     em_settings:
         EM_kV       : 200
